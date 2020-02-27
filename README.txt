@@ -1,5 +1,7 @@
  Learning Distance for Sequences by Learning a Ground Metricからフォークし、matlabコードをほぼ全てpythonに書き換えました。
+ 
  書き換えたコードは全て「Python」というディレクトリに入っています。
+ 
  「Python」ディレクトリの中でさらにデータセットごとにフォルダが分かれており、例えばMSRAction3Dなら対応するフォルダ内の「EvaluateRVSML_MSRAction3D_60.py」を実行すると結果が得られます。
 			      
 			      
