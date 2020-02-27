@@ -1,7 +1,7 @@
-function [Map,Acc,knn_averagetime] = NNClassifier(classnum,trainset,trainsetnum,testsetdata,testsetdatanum,testsetlabel,options)
-    lambda1 = options.lambda1;
-    lambda2 = options.lambda2;
-    delta = options.delta;
+function [Map,Acc,knn_averagetime] = NNClassifier_dtw(classnum,trainset,trainsetnum,testsetdata,testsetdatanum,testsetlabel,options)
+%     lambda1 = options.lambda1;
+%     lambda2 = options.lambda2;
+%     delta = options.delta;
     
     trainsetdatanum = sum(trainsetnum);
     trainsetdata = cell(1,trainsetdatanum);
@@ -36,17 +36,17 @@ function [Map,Acc,knn_averagetime] = NNClassifier(classnum,trainset,trainsetnum,
     dis_ap = zeros(1,testsetdatanum);
     
     rightnum = zeros(k_num,1);
-    for j = 1:testsetdatanum
-        disp(j);
+    for j = 1:testsetdatanum       
         for m2 = 1:trainsetdatanum
-            %[Dist,D,matchlength,w] = dtw2(trainsetdata{m2}',testsetdata{j}');
-%             [Dist,T] = Sinkhorn_distance(trainsetdata{m2},testsetdata{j},lambda0,0);     
-            [Dist,T] = OPW_w(trainsetdata{m2},testsetdata{j},[],[],lambda1,lambda2,delta,0);
+            [Dist,T] = dtw2(trainsetdata{m2}',testsetdata{j}');
+            %[Dist,D,matchlength,w] = dtw2_fast(trainsetdata{m2}',testsetdata{j}');
+            %[Dist,T] = Sinkhorn_distance(trainsetdata{m2},testsetdata{j},lambda,0);     
+            %[Dist,T] = OPW_w(trainsetdata{m2},testsetdata{j},[],[],lambda1,lambda2,delta,0);
+            if isnan(Dist)
+                disp('NaN distance!');
+            end
             %[dist, T] = OPW_w(ct_barycenter{c}.supp',ct_barycenter{c2}.supp',ct_barycenter{c}.w',ct_barycenter{c2}.w',lambda1,lambda2,delta,0);
             dis_totrain_scores(m2,j) = Dist;
-            if isnan(Dist)
-                disp('Not a number!');
-            end
         end
         
         [distm,index]=sort(dis_totrain_scores(:,j));
@@ -66,7 +66,6 @@ function [Map,Acc,knn_averagetime] = NNClassifier(classnum,trainset,trainsetnum,
         end              
         
         temp_dis = -dis_totrain_scores(:,j);
-        %temp_dis
         temp_dis(find(isnan(temp_dis))) = 0;
         [~,~,info] = vl_pr(trainsetlabelfull(:,testsetlabelori(j)),temp_dis);
         dis_ap(j) = info.ap;

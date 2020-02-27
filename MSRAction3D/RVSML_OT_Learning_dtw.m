@@ -37,10 +37,15 @@ for c = 1:classnum
         seqlen = size(trainset{c}{n},1);
         T_ini = ones(seqlen,templatenum)./(seqlen*templatenum);
         for i = 1:seqlen
-            temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);
+            a = trainset{c}{n}(i,:);
+            temp_ra = a'*a;
             for j = 1:templatenum
                 R_A = R_A + T_ini(i,j)*temp_ra;
+%                 disp(size(temp_ra));
+%                 disp(size(R_A));
+%                 disp(size(R_B));
                 R_B = R_B + T_ini(i,j)*trainset{c}{n}(i,:)'*virtual_sequence{c}(j,:);
+%                 disp(size(R_B));
             end
         end
     end
@@ -53,6 +58,7 @@ L = R_I\R_B;
 %% update
 loss_old = 10^8;
 for nIter = 1:max_nIter
+    disp(nIter);
     loss = 0;
     R_A = zeros(dim,dim);
     R_B = zeros(dim,downdim);
@@ -61,6 +67,8 @@ for nIter = 1:max_nIter
         for n = 1:trainsetnum(c)
             seqlen = size(trainset{c}{n},1);
             %[dist, T] = OPW_w(trainset{c}{n}*L,virtual_sequence{c},[],[],lambda1,lambda2,delta,0);
+%             disp(size((trainset{c}{n}*L)'));
+%             disp(size(virtual_sequence{c}'));
             [dist, T] = dtw2((trainset{c}{n}*L)',virtual_sequence{c}');
             loss = loss + dist;
             for i = 1:seqlen
@@ -82,5 +90,5 @@ for nIter = 1:max_nIter
     
     R_I = R_A + lambda*N*eye(dim); 
     %L = inv(R_I) * R_B;
-    L = R_I\R_B;   
+    L = R_I\R_B;
 end

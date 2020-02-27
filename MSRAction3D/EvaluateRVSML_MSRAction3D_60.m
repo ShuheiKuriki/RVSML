@@ -4,10 +4,10 @@ classnum = charnum;
 dim = 60;
 CVAL = 1;
 
-% add path
-addpath('E:/BING/ActionRecognition/FrameWideFeatures/vlfeat-0.9.18/toolbox');
+ % add path
+addpath('/usr/local/Cellar/vlfeat-0.9.21/toolbox');
 vl_setup();
-addpath('E:/BING/ActionRecognition/FrameWideFeatures/libsvm-3.20/matlab');
+% addpath('libsvm-3.20/matlab');
 
 delta = 1;
 lambda1 = 50;
@@ -40,7 +40,7 @@ end
 for j = 1:testsetdatanum
     testdownsetdata{j} = testsetdata{j} * L;
 end
-[RVSML_opw_map,RVSML_opw_acc,RVSML_opw_time] = NNClassifier(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options);
+[RVSML_opw_map,RVSML_opw_acc,opw_knn_average_time] = NNClassifier(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options);
 RVSML_opw_acc_1 = RVSML_opw_acc(1);
 
 templatenum = 4;
@@ -61,15 +61,17 @@ end
 for j = 1:testsetdatanum
     testdownsetdata{j} = testsetdata{j} * L;
 end
-[RVSML_dtw_map,RVSML_dtw_acc,RVSML_dtw_time] = NNClassifier_dtw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options);
+[RVSML_dtw_map,RVSML_dtw_acc, dtw_knn_average_time] = NNClassifier_dtw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options);
 RVSML_dtw_acc_1 = RVSML_dtw_acc(1);
 
 fprintf('Training time of RVSML instantiated by DTW is %.4f \n',RVSML_dtw_time);
 fprintf('Classification using 1 nearest neighbor classifier with DTW distance:\n');
 fprintf('MAP is %.4f \n',RVSML_dtw_map);
 fprintf('Accuracy is %.4f \n',RVSML_dtw_acc_1);
+fprintf('dtw_knn_average_time is %.4f \n',dtw_knn_average_time);
 
 fprintf('Training time of RVSML instantiated by OPW is %.4f \n',RVSML_opw_time);
 fprintf('Classification using 1 nearest neighbor classifier with OPW distance:\n');
 fprintf('MAP is %.4f \n',RVSML_opw_map);
 fprintf('Accuracy is %.4f \n',RVSML_opw_acc_1);
+fprintf('opw_knn_average_time is %.4f \n',opw_knn_average_time);

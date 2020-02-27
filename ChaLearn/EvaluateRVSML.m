@@ -7,9 +7,9 @@ CVAL = 1;
 
 
 % TODO: add path
-addpath('E:/BING/ActionRecognition/FrameWideFeatures/vlfeat-0.9.18/toolbox');
+addpath('/usr/local/Cellar/vlfeat-0.9.21/toolbox/');
 vl_setup();
-addpath('E:/BING/ActionRecognition/FrameWideFeatures/libsvm-3.20/matlab');
+% addpath('E:/BING/ActionRecognition/FrameWideFeatures/libsvm-3.20/matlab');
 
 delta = 1;
 lambda1 = 50;
@@ -19,6 +19,15 @@ options.err_limit = 10^(-2);
 options.lambda1 = lambda1;
 options.lambda2 = lambda2;
 options.delta = delta;
+
+save('./datamat/trainset.mat','trainset','-v7');
+save('./datamat/trainsetnum.mat','trainsetnum','-v7');
+save('./datamat/testset.mat','testset','-v7');
+save('./datamat/testsetnum.mat','testsetnum','-v7');
+save('./datamat/testsetdata.mat','testsetdata','-v7');
+save('./datamat/testsetlabel.mat','testsetlabel','-v7');
+save('./datamat/testsetdatanum.mat','testsetdatanum','-v7');
+save('./datamat/traindatamean.mat','traindatamean','-v7');
 
 load('./datamat/trainset.mat');
 load('./datamat/trainsetnum.mat');
@@ -91,4 +100,4 @@ fprintf('Accuracy is %.4f \n',RVSML_dtw_NN_acc_1);
 fprintf('Training time of RVSML instantiated by OPW is %.4f \n',opwtrain_time);
 fprintf('Classification using 1 nearest neighbor classifier with OPW distance:\n');
 fprintf('MAP is %.4f \n',RVSML_opw_NN_map);
-fprintf('Accuracy is %.4f \n',RVSML_opw_NN_acc_1);
+fprintf('Accurac2y is %.4f \n',RVSML_opw_NN_acc_1);

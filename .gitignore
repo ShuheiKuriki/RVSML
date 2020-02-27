@@ -18,6 +18,15 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+datamat/
+Dataset/
+*.mat
+.DS_Store
+
+bin
+lib
+__pycache__
+
 # =========================
 # Operating System Files
 # =========================

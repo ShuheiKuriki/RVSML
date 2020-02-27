@@ -53,11 +53,18 @@ L = R_I\R_B;
 %% update
 loss_old = 10^8;
 for nIter = 1:max_nIter
+    disp(nIter)
+%     if nIter == 2
+%         disp("stop");
+%     end
     loss = 0;
     R_A = zeros(dim,dim);
     R_B = zeros(dim,downdim);
     N = sum(trainsetnum);
     for c = 1:classnum
+%         if c == 2
+%             disp("stop");
+%         end
         for n = 1:trainsetnum(c)
             seqlen = size(trainset{c}{n},1);
             [dist, T] = OPW_w(trainset{c}{n}*L,virtual_sequence{c},[],[],lambda1,lambda2,delta,0);
