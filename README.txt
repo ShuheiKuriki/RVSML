@@ -1,4 +1,11 @@
-                              Learning Distance for Sequences by Learning a Ground Metric
+ Learning Distance for Sequences by Learning a Ground Metricからフォークし、matlabコードをほぼ全てpythonに書き換えました。
+ 
+ 書き換えたコードは全て「Python」というディレクトリに入っています。
+ 
+ 「Python」ディレクトリの中でさらにデータセットごとにフォルダが分かれており、例えばMSRAction3Dなら対応するフォルダ内の「EvaluateRVSML_MSRAction3D_60.py」を実行すると結果が得られます。
+			      
+			      
+			      Learning Distance for Sequences by Learning a Ground Metric
 
 1. Introduction.
 
@@ -29,7 +36,7 @@ The 60-dimensional frame-wide features are employed as described in the suppleme
         EvaluateRVSML_MSRAction3D_60
 
 
-- ChaLearn --- For the 100-dimensional frame-wide features provided in "https://bitbucket.org/bfernando/videodarwin" (described in "B. Fernando, E. Gavves, J. O. M., A. Ghodrati, and T. Tuytelaars,��Modeling video evolution for action recognition,�� CVPR, 2015."),  we use the proposed RVSML to learn the ground metric and employ the NN classifier to perform classification. We have provided an organized version of the features: https://pan.baidu.com/s/1mjkonfeJMojoUGnMNYpXpw
+- ChaLearn --- For the 100-dimensional frame-wide features provided in "https://bitbucket.org/bfernando/videodarwin" (described in "B. Fernando, E. Gavves, J. O. M., A. Ghodrati, and T. Tuytelaars,¡°Modeling video evolution for action recognition,¡± CVPR, 2015."),  we use the proposed RVSML to learn the ground metric and employ the NN classifier to perform classification. We have provided an organized version of the features: https://pan.baidu.com/s/1mjkonfeJMojoUGnMNYpXpw
 
   Dependency:
      vlfeat-0.9.18
@@ -42,7 +49,7 @@ The 60-dimensional frame-wide features are employed as described in the suppleme
         EvaluateRVSML
 
 
-- ChaLearn_Deep --- For the 100-dimensional frame-wide features provided in "https://bitbucket.org/bfernando/videodarwin" (described in "B. Fernando, E. Gavves, J. O. M., A. Ghodrati, and T. Tuytelaars,��Modeling video evolution for action recognition,�� CVPR, 2015."),  we use the proposed Deep-RVSML to learn the ground metric and employ the NN classifier to perform classification.
+- ChaLearn_Deep --- For the 100-dimensional frame-wide features provided in "https://bitbucket.org/bfernando/videodarwin" (described in "B. Fernando, E. Gavves, J. O. M., A. Ghodrati, and T. Tuytelaars,¡°Modeling video evolution for action recognition,¡± CVPR, 2015."),  we use the proposed Deep-RVSML to learn the ground metric and employ the NN classifier to perform classification.
 
   Dependency:
      vlfeat-0.9.18
