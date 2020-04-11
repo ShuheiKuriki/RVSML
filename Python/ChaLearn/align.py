@@ -137,7 +137,7 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     mid_para = np.sqrt((1/(N**2) + 1/(M**2)))
     for i in range(N):
         for j in range(M):
-            d = np.abs((i+1)/N - (j+1)/M)/mid_para
+            d = np.abs(i/N - j/M)/mid_para
             P[i,j] = np.exp(-d**2/(2*delta**2))/(delta*np.sqrt(2*np.pi))
 
     #D = zeros(N,M)
@@ -145,7 +145,7 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     for i in range(N):
         for j in range(M):
             #D(i,j) = sum((X(i,:)-Y(j,:)).^2)
-            S[i,j] = lamda1/(((i+1)/N-(j+1)/M)**2+1)
+            S[i,j] = lamda1/((i/N-j/M)**2+1)
 
 
 

@@ -2,10 +2,12 @@ import numpy as np
 import time
 from align import *
 from sklearn import metrics
+import logging
 
-def NNClassifier(classnum,trainset,trainsetnum,
+def NNClassifier_opw(classnum,trainset,trainsetnum,
                     testsetdata,testsetdatanum,testsetlabel,options):
 
+    logger = logging.getLogger('ChaLearnOPWLog')
     lambda1 = options.lambda1
     lambda2 = options.lambda2
     delta = options.delta
@@ -27,6 +29,7 @@ def NNClassifier(classnum,trainset,trainsetnum,
     #save('./datamat/trainsetdata.mat','trainsetdata')
     #save('./datamat/trainsetlabel.mat','trainsetlabel')
 
+    # k_pool = [1, 3, 5, 7, 9, 11, 15, 30]
     k_pool = [1]
     k_num = len(k_pool)
     Acc = np.zeros(k_num)
@@ -40,14 +43,12 @@ def NNClassifier(classnum,trainset,trainsetnum,
     ClassLabel = np.arange(classnum).T+1
     # dis_ap = np.zeros(testsetdatanum)
     Macro = np.zeros(testsetdatanum)
-    # print(Macro.shape)
+    # logger.info(Macro.shape)
     Micro = np.zeros(testsetdatanum)
-    # print(trainsetlabelfull)
+    # logger.info(trainsetlabelfull)
     rightnum = np.zeros(k_num)
     for j in range(testsetdatanum):
-        print("j:",j)
-        if j==10:
-            print("stop")
+        logger.info("j:{}".format(j))
         for m2 in range(trainsetdatanum):
             #[Dist,D,matchlength,w] = dtw2(trainsetdata[m2]',testsetdata[j]')
             #[Dist,T] = Sinkhorn_distance(trainsetdata[m2],testsetdata[j],lambda,0)
@@ -56,7 +57,7 @@ def NNClassifier(classnum,trainset,trainsetnum,
             dis_totrain_scores[m2,j] = Dist
 
             if np.isnan(Dist):
-                print('NaN distance!')
+                logger.info('NaN distance!')
 
 
         distm = np.sort(dis_totrain_scores[:,j])
@@ -76,7 +77,7 @@ def NNClassifier(classnum,trainset,trainsetnum,
 
         temp_dis = -dis_totrain_scores[:,j]
         temp_dis[np.nonzero(np.isnan(temp_dis))] = 0
-        # print("{:.1f}%".format(j/testsetdatanum*100))
+        # logger.info("{:.1f}%".format(j/testsetdatanum*100))
         Macro[j] = metrics.average_precision_score(trainsetlabelfull[:,testsetlabelori[j]-1],temp_dis, 'macro')
         Micro[j] = metrics.average_precision_score(trainsetlabelfull[:,testsetlabelori[j]-1],temp_dis, 'micro')
 
@@ -86,7 +87,7 @@ def NNClassifier(classnum,trainset,trainsetnum,
 
     knn_time = time.time()-tic
     knn_averagetime = knn_time/testsetdatanum
-    # print(vars())
+    # logger.info(vars())
     return macro,micro,Acc,knn_averagetime
 
 def NNClassifier_dtw(classnum,trainset,trainsetnum,
@@ -96,6 +97,7 @@ def NNClassifier_dtw(classnum,trainset,trainsetnum,
     # lambda2 = options.lambda2
     # delta = options.delta
 
+    logger = logging.getLogger('ChaLearnDTWLog')
     trainsetdatanum = np.sum(trainsetnum)
     trainsetdata = [0]*trainsetdatanum
     trainsetlabel = np.zeros(trainsetdatanum)
@@ -107,15 +109,16 @@ def NNClassifier_dtw(classnum,trainset,trainsetnum,
             sample_count = sample_count + 1
 
     testsetlabelori = testsetlabel
-    # print("testsetlabel:",testsetlabel)
+    # logger.info("testsetlabel:",testsetlabel)
     testsetlabel = getLabel(testsetlabel)
-    # print("trainsetlabel:",trainsetlabel)
+    # logger.info("trainsetlabel:",trainsetlabel)
     trainsetlabelfull = getLabel(trainsetlabel)
 
     #save('./datamat/trainsetdata.mat','trainsetdata')
     #save('./datamat/trainsetlabel.mat','trainsetlabel')
 
-    k_pool = [1, 3, 5, 7, 9, 11, 15, 30]
+    # k_pool = [1, 3, 5, 7, 9, 11, 15, 30]
+    k_pool = [1]
     k_num = len(k_pool)
     Acc = np.zeros(k_num)
     #dtw_knn_map = zeros(vidsetnum,)
@@ -128,20 +131,20 @@ def NNClassifier_dtw(classnum,trainset,trainsetnum,
     ClassLabel = np.arange(classnum).T+1
     # dis_ap = np.zeros(testsetdatanum)
     Macro = np.zeros(testsetdatanum)
-    # print(Macro.shape)
+    # logger.info(Macro.shape)
     Micro = np.zeros(testsetdatanum)
-    # print(trainsetlabelfull)
+    # logger.info(trainsetlabelfull)
     rightnum = np.zeros(k_num)
     for j in range(testsetdatanum):
-        print("j:", j)
+        logger.info("j:{}".format(j))
         for m2 in range(trainsetdatanum):
-            # print(trainsetdata[m2].shape,testsetdata[j].shape)
+            # logger.info(trainsetdata[m2].shape,testsetdata[j].shape)
             Dist,T = dtw2(trainsetdata[m2], testsetdata[j])
             #[Dist,D,matchlength,w] = dtw2_fast(trainsetdata[m2]',testsetdata[j]')
             #[Dist,T] = Sinkhorn_distance(trainsetdata[m2],testsetdata[j],lambda,0)
             #[Dist,T] = OPW_w(trainsetdata[m2],testsetdata[j],[],[],lambda1,lambda2,delta,0)
             if np.isnan(Dist):
-                print('NaN distance!')
+                logger.info('NaN distance!')
 
             #[dist, T] = OPW_w(ct_barycenter[c].supp',ct_barycenter[c2].supp',ct_barycenter[c].w',ct_barycenter[c2].w',lambda1,lambda2,delta,0)
             dis_totrain_scores[m2,j] = Dist
@@ -158,14 +161,14 @@ def NNClassifier_dtw(classnum,trainset,trainsetnum,
             distm2 = np.max(cnt)
             ind = np.argmax(cnt)
             predict = ClassLabel[ind]
-            # print(predict)
+            # logger.info(predict)
             # predict = predict
             if predict==testsetlabelori[j]:
                 rightnum[k_count] = rightnum[k_count] + 1
 
         temp_dis = -dis_totrain_scores[:,j]
         temp_dis[np.nonzero(np.isnan(temp_dis))] = 0
-        # print("[:.1f]#".format(j/testsetdatanum*100))
+        # logger.info("[:.1f]#".format(j/testsetdatanum*100))
         Macro[j] = metrics.average_precision_score(trainsetlabelfull[:,testsetlabelori[j]-1],temp_dis, 'macro')
         Micro[j] = metrics.average_precision_score(trainsetlabelfull[:,testsetlabelori[j]-1],temp_dis, 'micro')
         # a,b,info = vl_pr(trainsetlabelfull[:,testsetlabelori[j]],temp_dis)
@@ -178,12 +181,12 @@ def NNClassifier_dtw(classnum,trainset,trainsetnum,
 
     knn_time = time.time()-tic
     knn_averagetime = knn_time/testsetdatanum
-    # print(vars())
+    # logger.info(vars())
     return macro,micro,Acc,knn_averagetime
 
 def getLabel(classid):
     p = int(max(classid))
-    # print(p)
+    # logger.info(p)
     X = np.zeros((np.size(classid),p))-1
     for i in range(p):
         indx = np.nonzero(classid == i+1)

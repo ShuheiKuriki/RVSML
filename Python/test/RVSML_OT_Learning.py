@@ -16,7 +16,7 @@ def RVSML_OT_Learning(trainset,templatenum,lambda0,options):
 
     classnum = len(trainset)
     downdim = classnum*templatenum
-    dim = np.shape(trainset[0][0][0])[1]
+    dim = np.shape(trainset[0][0])[1]
 
     trainsetnum = np.zeros(classnum, dtype=int)
     virtual_sequence = [0]*classnum
@@ -34,11 +34,11 @@ def RVSML_OT_Learning(trainset,templatenum,lambda0,options):
     N = np.sum(trainsetnum)
     for c in range(classnum):
         for n in range(trainsetnum[c]):
-            seqlen = np.shape(trainset[c][0][n])[0]
+            seqlen = np.shape(trainset[c][n])[0]
             # test = trainset[c][0][n]
             T_ini = np.ones((seqlen,templatenum))/(seqlen*templatenum)
             for i in range(seqlen):
-                a = trainset[c][0][n][i,:]
+                a = trainset[c][n][i,:]
                 temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
                 for j in range(templatenum):
                     R_A = R_A + T_ini[i,j]*temp_ra
@@ -66,11 +66,11 @@ def RVSML_OT_Learning(trainset,templatenum,lambda0,options):
             # if c == 1:
             #     print("stop")
             for n in range(trainsetnum[c]):
-                seqlen = np.shape(trainset[c][0][n])[0]
-                dist, T = OPW_w(np.dot(trainset[c][0][n],L), virtual_sequence[c],[],[],lambda1,lambda2,delta,0)
+                seqlen = np.shape(trainset[c][n])[0]
+                dist, T = OPW_w(np.dot(trainset[c][n],L), virtual_sequence[c],[],[],lambda1,lambda2,delta,0)
                 loss = loss + dist
                 for i in range(seqlen):
-                    a = trainset[c][0][n][i,:]
+                    a = trainset[c][n][i,:]
                     temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
                     for j in range(templatenum):
                         b = virtual_sequence[c][j,:]
@@ -88,7 +88,7 @@ def RVSML_OT_Learning(trainset,templatenum,lambda0,options):
         #L = inv(R_I) * R_B
         L = np.linalg.solve(R_I,R_B)
     # print(time.time()-tic)
-    return L
+    return L, virtual_sequence
 
 def RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options):
     # delta = 1
@@ -105,7 +105,7 @@ def RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options):
 
     classnum = len(trainset)
     downdim = classnum*templatenum
-    dim = np.shape(trainset[0][0][0])[1]
+    dim = np.shape(trainset[0][0])[1]
 
     trainsetnum = np.zeros(classnum, dtype=int)
     virtual_sequence = [0]*classnum
@@ -123,11 +123,11 @@ def RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options):
     N = np.sum(trainsetnum)
     for c in range(classnum):
         for n in range(trainsetnum[c]):
-            seqlen = np.shape(trainset[c][0][n])[0]
+            seqlen = np.shape(trainset[c][n])[0]
             # test = trainset[c][0][n]
             T_ini = np.ones((seqlen,templatenum))/(seqlen*templatenum)
             for i in range(seqlen):
-                a = trainset[c][0][n][i,:]
+                a = trainset[c][n][i,:]
                 temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
                 for j in range(templatenum):
                     R_A = R_A + T_ini[i,j]*temp_ra
@@ -152,12 +152,12 @@ def RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options):
         N = np.sum(trainsetnum)
         for c in range(classnum):
             for n in range(trainsetnum[c]):
-                seqlen = np.shape(trainset[c][0][n])[0]
+                seqlen = np.shape(trainset[c][n])[0]
                 #[dist, T] = OPW_w(trainset[c][0][n]*L,virtual_sequence{c},[],[],lambda1,lambda2,delta,0)
-                dist, T = dtw2(np.dot(trainset[c][0][n],L), virtual_sequence[c])
+                dist, T = dtw2(np.dot(trainset[c][n],L), virtual_sequence[c])
                 loss = loss + dist
                 for i in range(seqlen):
-                    a = trainset[c][0][n][i,:]
+                    a = trainset[c][n][i,:]
                     temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
                     for j in range(templatenum):
                         b = virtual_sequence[c][j,:]
@@ -175,4 +175,4 @@ def RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options):
         #L = inv(R_I) * R_B
         L = np.linalg.solve(R_I,R_B)
     # print(time.time()-tic)
-    return L
+    return L, virtual_sequence

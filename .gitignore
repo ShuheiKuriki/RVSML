@@ -27,7 +27,7 @@ bin
 lib
 __pycache__
 pyvenv.cfg
-
+.envrc
 # =========================
 # Operating System Files
 # =========================

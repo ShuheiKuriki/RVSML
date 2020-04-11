@@ -46,8 +46,8 @@ def NNClassifier(classnum,trainset,trainsetnum,
     rightnum = np.zeros(k_num)
     for j in range(testsetdatanum):
         print("j:",j)
-        if j==10:
-            print("stop")
+        # if j==10:
+        #     print("stop")
         for m2 in range(trainsetdatanum):
             #[Dist,D,matchlength,w] = dtw2(trainsetdata[m2]',testsetdata[j]')
             #[Dist,T] = Sinkhorn_distance(trainsetdata[m2],testsetdata[j],lambda,0)

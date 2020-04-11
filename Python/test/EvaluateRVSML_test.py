@@ -5,23 +5,10 @@ from NNClassifier import *
 from RVSML_OT_Learning import *
 import logging
 
-# ログの出力名を設定（1）
-# logger = logging.getLogger('LoggingTest')
-
-# ログレベルの設定（2）
-# logger.setLevel(20)
-
-# ログのコンソール出力の設定（3）
-# sh = logging.StreamHandler()
-# logger.addHandler(sh)
-
-# ログのファイル出力先を設定（4）
-# fh = logging.FileHandler('test.log')
-# logger.addHandler(fh)
-
-charnum = 20
+charnum = 4
 classnum = charnum
-dim = 60
+dim = 2
+nperclass = 10
 CVAL = 1
 
  # add path
@@ -45,53 +32,49 @@ class Options:
 
 options = Options(max_iters,err_limit,lambda1,lambda2,delta)
 
-data = loadmat("MSR_Python_ori.mat")
+# data = loadmat("MSR_Python_ori.mat")
 
 # trainset = data["trainset"][0]
-# trainsetdata = data["trainsetdata"]
-# trainsetdatanum = data["trainsetdatanum"][0][0]
-# trainsetdatalabel = data["trainsetdatalabel"][0]
-# trainsetnum = data["trainsetnum"][0]
-#
-# testsetdata = data["testsetdata"][0]
-# testsetdatanum = data["testsetdatanum"][0][0]
-# testsetdatalabel = data["testsetdatalabel"][0]
-#
-# trainset_m = trainset
-# testsetdata_m = testsetdata
-# testsetlabel = testsetdatalabel
+trainset = [0]*classnum
+trainset[0] = [np.array([np.linspace(0,100,10+i), np.linspace(0,100,10+i)]).reshape(dim,10+i).T for i in range(nperclass)]
+trainset[1] = [np.array([np.linspace(0,-100,10+i), np.linspace(0,100,10+i)]).reshape(dim,10+i).T for i in range(nperclass)]
+trainset[2] = [np.array([np.linspace(0,-100,10+i), np.linspace(0,-100,10+i)]).reshape(dim,10+i).T for i in range(nperclass)]
+trainset[3] = [np.array([np.linspace(0,100,10+i), np.linspace(0,-100,10+i)]).reshape(dim,10+i).T for i in range(nperclass)]
 
-# [
-# "trainset", (20,)
-# "trainsetnum", (20,)
-# "testset", (20,)
-# "testsetnum",
-# "testsetdata",
-# "testsetlabel",
-# "testsetdatanum",
-# "traindatamean"
-#
-# trainset: (20,)
-# trainsetnum: (20,)
-# trainsetlabel
-# trainsetdatanum 284
-# # testset: (20,)
-# testsetdatanum: 273
-# testsetdata: (273,)
-# testsetlabel: (273,)
-# testsetdatanum: ()
-# traindatamean: (100,)
-# ]
+# trainsetdatanum = data["trainsetdatanum"][0][0]
+trainsetdatanum = 40
+# trainsetdatalabel = data["trainsetdatalabel"][0]
+trainsetdatalabel = [1]*nperclass+[2]*nperclass+[3]*nperclass+[4]*nperclass
+# trainsetnum = data["trainsetnum"][0]
+trainsetnum = [10]*4
+# testsetdata = data["testsetdata"][0]
+# testsetdata = [0]*classnum
+testsetdata = [np.array([np.linspace(0,100,20+i), np.linspace(0,100,20+i)]).reshape(dim,20+i).T for i in range(nperclass)]
+testsetdata += [np.array([np.linspace(0,-100,20+i), np.linspace(0,100,20+i)]).reshape(dim,20+i).T for i in range(nperclass)]
+testsetdata += [np.array([np.linspace(0,-100,20+i), np.linspace(0,-100,20+i)]).reshape(dim,20+i).T for i in range(nperclass)]
+testsetdata += [np.array([np.linspace(0,100,20+i), np.linspace(0,-100,20+i)]).reshape(dim,20+i).T for i in range(nperclass)]
+
+# testsetdatanum = data["testsetdatanum"][0][0]
+testsetdatanum = 40
+# testsetdatalabel = data["testsetdatalabel"][0]
+testsetdatalabel = [1]*10+[2]*10+[3]*10+[4]*10
+trainset_m = trainset
+testsetdata_m = testsetdata
+testsetlabel = testsetdatalabel
 
 
 print("data lode done")
 
 print("OPW start")
-templatenum = 4
+templatenum = 8
 lambda0 = 0.01
 tic = time.time()
-L = RVSML_OT_Learning(trainset,templatenum,lambda0,options)
+L, v_s_opw = RVSML_OT_Learning(trainset,templatenum,lambda0,options)
 RVSML_opw_time = time.time() - tic
+
+# v_s_opw = np.array([v[0] for v in v_s_opw])
+# real_v_opw = np.linalg.solve(L.T,v_s_opw.T)
+
 print("OPW lerning done")
 ## classification with the learned metric
 # print("Classification start")
@@ -100,7 +83,7 @@ testdownsetdata = [0]*testsetdatanum
 for j in range(classnum):
     traindownset[j] = [0]*trainsetnum[j]
     for m in range(trainsetnum[j]):
-        traindownset[j][m] = np.dot(trainset[j][0][m] ,L)
+        traindownset[j][m] = np.dot(trainset[j][m] ,L)
 
 for j in range(testsetdatanum):
     testdownsetdata[j] = np.dot(testsetdata[j], L)
@@ -112,11 +95,14 @@ print("OPW Classification done")
 print("OPW done")
 print("DTW start")
 
-templatenum = 4
+templatenum = 8
 lambda0 = 0.1
 tic = time.time()
-L = RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options)
+L, v_s_dtw = RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options)
 RVSML_dtw_time = time.time() - tic
+
+# v_s_dtw = np.array([v[0] for v in v_s_dtw])
+# real_v_dtw = np.linalg.solve(L.T,v_s_dtw)
 print("dtw learning done")
 ## classification with the learned metric
 traindownset = [0]*classnum
@@ -124,7 +110,7 @@ testdownsetdata = [0]*testsetdatanum
 for j in range(classnum):
     traindownset[j] = [0]*trainsetnum[j]
     for m in range(trainsetnum[j]):
-        traindownset[j][m] = np.dot(trainset[j][0][m] ,L)
+        traindownset[j][m] = np.dot(trainset[j][m] ,L)
 
 for j in range(testsetdatanum):
     testdownsetdata[j] = np.dot(testsetdata[j], L)
@@ -137,17 +123,18 @@ print('Training time of RVSML instantiated by DTW is {:.4f} \n'.format(RVSML_dtw
 print('Classification using 1 nearest neighbor classifier with DTW distance:\n')
 print('MAP macro is {:.4f}, micro is {:.4f} \n'.format(RVSML_dtw_macro, RVSML_dtw_micro))
 print('dtw_knn_average_time is {:.4f} \n'.format(dtw_knn_average_time))
-
-for acc in RVSML_dtw_acc:
-    print('Accuracy is {:.4f} \n'.format(acc))
+print('Accuracy is {:.4f} \n'.format(RVSML_dtw_acc_1))
+for i,v in enumerate(v_s_dtw):
+    print('ラベル{}:{}'.format(i+1,v))
 
 print('Training time of RVSML instantiated by OPW is {:.4f} \n'.format(RVSML_opw_time))
 print('Classification using 1 nearest neighbor classifier with OPW distance:\n')
 print('MAP macro is {:.4f}, MAP micro is {:.4f} \n'.format(RVSML_opw_macro, RVSML_opw_micro))
 # print('Accuracy is .4f \n',RVSML_opw_acc_1)
 print('opw_knn_average_time is {:.4f} \n'.format(opw_knn_average_time))
+print('Accuracy is {:.4f} \n'.format(RVSML_opw_acc_1))
+for i,v in enumerate(v_s_opw):
+    print('ラベル{}:{}'.format(i+1,v))
 
-for acc in RVSML_opw_acc:
-    print('Accuracy is {:.4f} \n'.format(acc))
 
 # print("debug")
