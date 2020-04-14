@@ -88,7 +88,7 @@ def NNClassifier_opw(classnum,trainset,trainsetnum,
     knn_time = time.time()-tic
     knn_averagetime = knn_time/testsetdatanum
     # logger.info(vars())
-    return macro,micro,Acc,knn_averagetime
+    return macro,micro,Acc,knn_time,knn_averagetime
 
 def NNClassifier_dtw(classnum,trainset,trainsetnum,
                         testsetdata,testsetdatanum,testsetlabel,options):
@@ -182,7 +182,7 @@ def NNClassifier_dtw(classnum,trainset,trainsetnum,
     knn_time = time.time()-tic
     knn_averagetime = knn_time/testsetdatanum
     # logger.info(vars())
-    return macro,micro,Acc,knn_averagetime
+    return macro,micro,Acc,knn_time,knn_averagetime
 
 def getLabel(classid):
     p = int(max(classid))

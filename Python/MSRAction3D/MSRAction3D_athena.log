@@ -1,11 +1,9 @@
+trainsetdatanum:284
+trainsetnum:[15 14 15 13 15 15 14 15 15 15 15 15 12 14  9 15 15 15 15 13]
 trainset:(20,)
-trainsetnum:(20,)
-testset:(20,)
-testsetnum:(20,)
-testsetdata:(3454,)
-testsetlabel:(3454,)
-testsetdatanum:()
-traindatamean:(100,)
+trainsetdata:(284, 284)
+testsetdata:(273,)
+testsetdata:(273,)
 data load done
 OPW start
 initialization done
@@ -16,6 +14,7 @@ iteration:2
 iteration:3
 iteration:4
 iteration:5
+iteration:6
 OPW lerning done
 j:0
 j:1
@@ -41,9 +40,6 @@ j:20
 j:21
 j:22
 j:23
-NaN distance!
-NaN distance!
-NaN distance!
 j:24
 j:25
 j:26
@@ -205,8 +201,6 @@ j:181
 j:182
 j:183
 j:184
-NaN distance!
-NaN distance!
 j:185
 j:186
 j:187
@@ -295,219 +289,71 @@ j:269
 j:270
 j:271
 j:272
-j:273
-j:274
-j:275
-j:276
-j:277
-j:278
-j:279
-j:280
-j:281
-j:282
-j:283
-j:284
-j:285
-j:286
-j:287
-j:288
-j:289
-j:290
-j:291
-j:292
-j:293
-j:294
-j:295
-j:296
-j:297
-j:298
-j:299
-j:300
-j:301
-j:302
-j:303
-j:304
-j:305
-j:306
-j:307
-j:308
-j:309
-j:310
-j:311
-j:312
-j:313
-j:314
-j:315
-j:316
-j:317
-j:318
-j:319
-j:320
-j:321
-j:322
-j:323
-j:324
-j:325
-j:326
-j:327
-j:328
-j:329
-j:330
-j:331
-j:332
-j:333
-j:334
-j:335
-j:336
-j:337
-j:338
-j:339
-j:340
-j:341
-j:342
-j:343
-j:344
-j:345
-j:346
-j:347
-j:348
-j:349
-j:350
-NaN distance!
-j:351
-j:352
-j:353
-j:354
-j:355
-j:356
-j:357
-j:358
-j:359
-j:360
-j:361
-j:362
-j:363
-j:364
-j:365
-j:366
-j:367
-j:368
-j:369
-j:370
-j:371
-j:372
-j:373
-j:374
-j:375
-j:376
-j:377
-j:378
-j:379
-j:380
-j:381
-j:382
-j:383
-j:384
-j:385
-j:386
-j:387
-j:388
-j:389
-j:390
-j:391
-j:392
-j:393
-j:394
-j:395
-j:396
-j:397
-j:398
-j:399
-j:400
-j:401
-j:402
-j:403
-j:404
-j:405
-j:406
-j:407
-j:408
-j:409
-j:410
-j:411
-j:412
-j:413
-j:414
-j:415
-j:416
-j:417
-j:418
-j:419
-j:420
-j:421
-j:422
-j:423
-j:424
-j:425
-j:426
-j:427
-j:428
-j:429
-j:430
-j:431
-j:432
-j:433
-j:434
-j:435
-j:436
-j:437
-j:438
-j:439
-j:440
-j:441
-j:442
-j:443
-j:444
-j:445
-j:446
-j:447
-j:448
-j:449
-j:450
-j:451
-j:452
-j:453
-j:454
-j:455
-j:456
-j:457
-j:458
-j:459
-j:460
-j:461
-j:462
-j:463
-j:464
-j:465
-j:466
-j:467
-j:468
-j:469
-j:470
-j:471
-j:472
-j:473
-j:474
-j:475
-j:476
-j:477
-j:478
-j:479
-j:480
-j:481
-j:482
-j:483
-j:484
-j:485
-j:486
-j:487
+OPW Classification done
+OPW done
+DTW start
+initialization done
+update start
+iteration:0
+iteration:1
+iteration:2
+iteration:3
+iteration:4
+iteration:5
+iteration:6
+iteration:7
+iteration:8
+iteration:9
+dtw learning done
+Training time of RVSML instantiated by DTW is 9.0187 
+
+Classification using 1 nearest neighbor classifier with DTW distance:
+
+MAP macro is 0.5998, micro is 0.5998 
+
+dtw_knn_average_time is 0.4513 
+
+dtw_knn_total_time is 123.2127 
+
+Accuracy is 0.8571 
+
+Accuracy is 0.8462 
+
+Accuracy is 0.8059 
+
+Accuracy is 0.8242 
+
+Accuracy is 0.8132 
+
+Accuracy is 0.7875 
+
+Accuracy is 0.7509 
+
+Accuracy is 0.6081 
+
+Training time of RVSML instantiated by OPW is 0.7479 
+
+Classification using 1 nearest neighbor classifier with OPW distance:
+
+MAP macro is 0.2193, MAP micro is 0.2193 
+
+opw_knn_average_time is 1.9646 
+
+opw_knn_total_time is 536.3242 
+
+Accuracy is 0.4908 
+
+Accuracy is 0.4908 
+
+Accuracy is 0.4872 
+
+Accuracy is 0.4945 
+
+Accuracy is 0.4982 
+
+Accuracy is 0.4908 
+
+Accuracy is 0.4872 
+
+Accuracy is 0.4872 
+

@@ -101,14 +101,14 @@ for j in range(classnum):
 for j in range(testsetdatanum):
     testdownsetdata[j] = np.dot(testsetdata[j], L)
 
-RVSML_dtw_macro,RVSML_dtw_micro,RVSML_dtw_acc,dtw_knn_average_time = NNClassifier_dtw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options)
+RVSML_dtw_macro,RVSML_dtw_micro,RVSML_dtw_acc,dtw_knn_time,dtw_knn_average_time = NNClassifier_dtw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options)
 RVSML_dtw_acc_1 = RVSML_dtw_acc[0]
 
 logger.info('Training time of RVSML instantiated by DTW is {:.4f} \n'.format(RVSML_dtw_time))
 logger.info('Classification using 1 nearest neighbor classifier with DTW distance:\n')
 logger.info('MAP macro is {:.4f}, micro is {:.4f} \n'.format(RVSML_dtw_macro, RVSML_dtw_micro))
 logger.info('dtw_knn_average_time is {:.4f} \n'.format(dtw_knn_average_time))
-logger.info('dtw_knn_total_time is {:.4f} \n'.format(dtw_knn_average_time*testsetdatanum))
+logger.info('dtw_knn_total_time is {:.4f} \n'.format(dtw_knn_time))
 
 for acc in RVSML_dtw_acc:
     logger.info('Accuracy is {:.4f} \n'.format(acc))

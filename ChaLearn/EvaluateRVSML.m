@@ -20,14 +20,14 @@ options.lambda1 = lambda1;
 options.lambda2 = lambda2;
 options.delta = delta;
 
-save('./datamat/trainset.mat','trainset','-v7');
-save('./datamat/trainsetnum.mat','trainsetnum','-v7');
-save('./datamat/testset.mat','testset','-v7');
-save('./datamat/testsetnum.mat','testsetnum','-v7');
-save('./datamat/testsetdata.mat','testsetdata','-v7');
-save('./datamat/testsetlabel.mat','testsetlabel','-v7');
-save('./datamat/testsetdatanum.mat','testsetdatanum','-v7');
-save('./datamat/traindatamean.mat','traindatamean','-v7');
+% save('./datamat/trainset.mat','trainset','-v7');
+% save('./datamat/trainsetnum.mat','trainsetnum','-v7');
+% save('./datamat/testset.mat','testset','-v7');
+% save('./datamat/testsetnum.mat','testsetnum','-v7');
+% save('./datamat/testsetdata.mat','testsetdata','-v7');
+% save('./datamat/testsetlabel.mat','testsetlabel','-v7');
+% save('./datamat/testsetdatanum.mat','testsetdatanum','-v7');
+% save('./datamat/traindatamean.mat','traindatamean','-v7');
 
 load('./datamat/trainset.mat');
 load('./datamat/trainsetnum.mat');

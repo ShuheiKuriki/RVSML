@@ -100,7 +100,7 @@ for j in range(classnum):
 for j in range(testsetdatanum):
     testdownsetdata[j] = np.dot(testsetdata[j], L)
 
-RVSML_opw_macro,RVSML_opw_micro,RVSML_opw_acc,opw_knn_average_time = NNClassifier_opw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options)
+RVSML_opw_macro,RVSML_opw_micro,RVSML_opw_acc,opw_knn_time,opw_knn_average_time = NNClassifier_opw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options)
 # RVSML_opw_acc_1 = RVSML_opw_acc[0]
 
 logger.info('Training time of RVSML instantiated by OPW is {:.4f} \n'.format(RVSML_opw_time))
@@ -108,7 +108,7 @@ logger.info('Classification using 1 nearest neighbor classifier with OPW distanc
 logger.info('MAP macro is {:.4f}, MAP micro is {:.4f} \n'.format(RVSML_opw_macro, RVSML_opw_micro))
 # logger.info('Accuracy is .4f \n',RVSML_opw_acc_1)
 logger.info('opw_knn_average_time is {:.4f} \n'.format(opw_knn_average_time))
-logger.info('opw_knn_total_time is {:.4f} \n'.format(opw_knn_average_time))
+logger.info('opw_knn_total_time is {:.4f} \n'.format(opw_knn_time))
 
 for acc in RVSML_opw_acc:
     logger.info('Accuracy is {:.4f} \n'.format(acc))

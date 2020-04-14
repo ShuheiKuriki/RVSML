@@ -31,3 +31,6 @@ pyvenv.cfg
 # =========================
 # Operating System Files
 # =========================
+.vscode
+*.json
+Python/.vscode/launch.json
