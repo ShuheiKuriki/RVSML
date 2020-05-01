@@ -36,7 +36,8 @@ function [Map,Acc,knn_averagetime] = NNClassifier(classnum,trainset,trainsetnum,
     dis_ap = zeros(1,testsetdatanum);
     
     rightnum = zeros(k_num,1);
-    for j = 1:testsetdatanum       
+    for j = 1:testsetdatanum
+        disp(j);
         for m2 = 1:trainsetdatanum
             %[Dist,D,matchlength,w] = dtw2(trainsetdata{m2}',testsetdata{j}');
             %[Dist,T] = Sinkhorn_distance(trainsetdata{m2},testsetdata{j},lambda,0);     

@@ -21,6 +21,7 @@ $RECYCLE.BIN/
 datamat/
 Dataset/
 *.mat
+*.log
 .DS_Store
 
 bin
@@ -32,5 +33,4 @@ pyvenv.cfg
 # Operating System Files
 # =========================
 .vscode
-*.json
-Python/.vscode/launch.json
+.python-version

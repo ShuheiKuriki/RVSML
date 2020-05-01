@@ -29,20 +29,46 @@ CVAL = 1
 # addpath('libsvm-3.20/matlab')
 
 delta = 1
+lambda0 = 0.01
 lambda1 = 50
 lambda2 = 0.5
-max_iters = 10
+max_iters = 100
 err_limit = 10**(-6)
 
 class Options:
-    def __init__(self, max_iters, err_limit, lambda1, lambda2, delta):
+    def __init__(self, max_iters, err_limit, lambda0, lambda1, lambda2, delta):
         self.max_iters = max_iters
         self.err_limit = err_limit
+        self.lambda0 = lambda0
         self.lambda1 = lambda1
         self.lambda2 = lambda2
         self.delta = delta
 
-options = Options(max_iters,err_limit,lambda1,lambda2,delta)
+class Dataset:
+    def __init__(self,trainset,trainsetnum,trainsetdata,trainsetdatanum,trainsetdatalabel,testsetdata,testsetdatanum,testsetlabel,classnum,dim):
+        self.trainset = trainset
+        self.trainsetnum = trainsetnum
+        self.trainsetdata = trainsetdata
+        self.trainsetdatanum = trainsetdatanum
+        self.trainsetdatalabel = trainsetdatalabel
+        self.trainsetlabelfull = self.getLabel(trainsetdatalabel)
+        self.testsetdata = testsetdata
+        self.testsetdatanum = testsetdatanum
+        self.testsetlabel = testsetlabel
+        self.testsetlabelfull = self.getLabel(testsetlabel)
+        self.classnum = classnum
+        self.dim = dim
+
+    def getLabel(self,classid):
+        p = int(max(classid))
+        # logger.info(p)
+        X = np.zeros((np.size(classid),p))-1
+        for i in range(p):
+            indx = np.nonzero(classid == i+1)
+            X[indx,i] = 1
+        return X
+
+options = Options(max_iters,err_limit,lambda0,lambda1,lambda2,delta)
 
 data = loadmat("MSR_Python_ori.mat")
 
@@ -58,15 +84,18 @@ testsetdatalabel = data["testsetdatalabel"][0]
 
 trainset_m = trainset
 testsetdata_m = testsetdata
-testsetlabel = testsetdatalabel
 
-matlist = ["trainset", "trainsetdata","testsetdata", "testsetdata"]
+dataset = Dataset(trainset,trainsetnum,trainsetdata,trainsetdatanum,trainsetdatalabel,testsetdata,testsetdatanum,testsetdatalabel,classnum,dim)
 
-logger.info('trainsetdatanum:{}'.format(trainsetdatanum))
-logger.info('trainsetnum:{}'.format(trainsetnum))
+dataset.ClassLabel = np.arange(classnum).T+1
 
-for name in matlist:
-    exec("logger.info('%s:{}'.format(%s.shape))" % (name,name))
+# matlist = ["trainset", "trainsetdata","testsetdata", "testsetdata"]
+
+# logger.info('trainsetdatanum:{}'.format(trainsetdatanum))
+# logger.info('trainsetnum:{}'.format(trainsetnum))
+
+# for name in matlist:
+#     exec("logger.info('%s:{}'.format(%s.shape))" % (name,name))
 
 
 logger.info("data load done")
@@ -74,24 +103,30 @@ logger.info("data load done")
 logger.info("OPW start")
 
 templatenum = 4
-lambda0 = 0.01
 tic = time.time()
-L = RVSML_OT_Learning(trainset,templatenum,lambda0,options)
+L = RVSML_OT_Learning(dataset,templatenum,options,method='opw')
 RVSML_opw_time = time.time() - tic
 logger.info("OPW lerning done")
 ## classification with the learned metric
 # print("Classification start")
 traindownset = [0]*classnum
+traindownsetdata = []
 testdownsetdata = [0]*testsetdatanum
 for j in range(classnum):
     traindownset[j] = [0]*trainsetnum[j]
     for m in range(trainsetnum[j]):
-        traindownset[j][m] = np.dot(trainset[j][0][m] ,L)
+        downdata = np.dot(trainset[j][0][m],L)
+        traindownset[j][m] = downdata
+        traindownsetdata.append(downdata)
 
 for j in range(testsetdatanum):
     testdownsetdata[j] = np.dot(testsetdata[j], L)
 
-RVSML_opw_macro,RVSML_opw_micro,RVSML_opw_acc,opw_knn_average_time = NNClassifier(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options)
+dataset.traindownset = traindownset
+dataset.traindownsetdata = traindownsetdata
+dataset.testdownsetdata = testdownsetdata
+
+RVSML_opw_macro,RVSML_opw_micro,RVSML_opw_acc,opw_knn_average_time = NNClassifier(dataset,options, method='opw')
 # RVSML_opw_acc_1 = RVSML_opw_acc[0]
 
 logger.info("OPW Classification done")
@@ -100,25 +135,30 @@ logger.info("OPW done")
 logger.info("DTW start")
 
 templatenum = 4
-lambda0 = 0.1
 tic = time.time()
-L = RVSML_OT_Learning_dtw(trainset,templatenum,lambda0,options)
+L = RVSML_OT_Learning(dataset,templatenum,options,method='dtw')
 RVSML_dtw_time = time.time() - tic
 logger.info("dtw learning done")
 ## classification with the learned metric
 traindownset = [0]*classnum
+traindownsetdata = []
 testdownsetdata = [0]*testsetdatanum
 for j in range(classnum):
     traindownset[j] = [0]*trainsetnum[j]
     for m in range(trainsetnum[j]):
-        traindownset[j][m] = np.dot(trainset[j][0][m] ,L)
+        downdata = np.dot(trainset[j][0][m],L)
+        traindownset[j][m] = downdata
+        traindownsetdata.append(downdata)
 
 for j in range(testsetdatanum):
     testdownsetdata[j] = np.dot(testsetdata[j], L)
 
-RVSML_dtw_macro,RVSML_dtw_micro,RVSML_dtw_acc,dtw_knn_average_time = NNClassifier_dtw(classnum,traindownset,trainsetnum,testdownsetdata,testsetdatanum,testsetlabel,options)
+dataset.traindownset = traindownset
+dataset.traindownsetdata = traindownsetdata
+dataset.testdownsetdata = testdownsetdata
+
+RVSML_dtw_macro,RVSML_dtw_micro,RVSML_dtw_acc,dtw_knn_average_time = NNClassifier(dataset,options,method='dtw')
 RVSML_dtw_acc_1 = RVSML_dtw_acc[0]
-# logger.debug(vars())
 
 logger.info('Training time of RVSML instantiated by DTW is {:.4f} \n'.format(RVSML_dtw_time))
 logger.info('Classification using 1 nearest neighbor classifier with DTW distance:\n')

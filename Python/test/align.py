@@ -119,8 +119,8 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     # License
     # The code can be used for research purposes only.
 
-    tolerance=.5e-2
-    maxIter= 20
+    tolerance=.5e-6
+    maxIter= 100000
     # The maximum number of iterations with a default small value, the
     # tolerance and VERBOSE may not be used
     # Set it to a large value (e.g, 1000 or 10000) to obtain a more precise
@@ -185,7 +185,7 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     # Advances in Neural Information Processing Systems (NIPS) 26, 2013
     while compt < maxIter:
         u = 1/np.dot(ainvK, b/(np.dot(K.T,u)))
-        compt = compt+1
+        compt += 1
         # check the stopping criterion every 20 fixed point iterations
         if compt%20 == 1 or compt == maxIter:
             # split computations to recover right and left scalings.

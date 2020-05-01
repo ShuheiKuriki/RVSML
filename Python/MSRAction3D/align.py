@@ -79,7 +79,7 @@ def dtw2(t,r):
     return Dist,T
 
 
-def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
+def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # Compute the Order-Preserving Wasserstein Distance (OPW) for two sequences
     # X and Y
 
@@ -120,7 +120,7 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     # The code can be used for research purposes only.
 
     tolerance=.5e-2
-    maxIter= 20
+    maxIter= 1000
     # The maximum number of iterations with a default small value, the
     # tolerance and VERBOSE may not be used
     # Set it to a large value (e.g, 1000 or 10000) to obtain a more precise
@@ -138,16 +138,14 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     for i in range(N):
         for j in range(M):
             d = np.abs(i/N - j/M)/mid_para
-            P[i,j] = np.exp(-d**2/(2*delta**2))/(delta*np.sqrt(2*np.pi))
+            P[i,j] = np.exp(-d**2/(2*options.delta**2))/(options.delta*np.sqrt(2*np.pi))
 
     #D = zeros(N,M)
     S = np.zeros((N,M))
     for i in range(N):
         for j in range(M):
             #D(i,j) = sum((X(i,:)-Y(j,:)).^2)
-            S[i,j] = lamda1/((i/N-j/M)**2+1)
-
-
+            S[i,j] = options.lambda1/((i/N-j/M)**2+1)
 
     D = pdist2(X,Y, 'sqeuclidean')
     # In cases the instances in sequences are not normalized and/or are very
@@ -155,8 +153,8 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
     # D = D/max(max(D))  D = D/(10^2)
     #D = D/10
 
-    K = P*np.exp((S - D)/lamda2)
-    # With some parameters, some entries of K may exceed the maching-precision
+    K = P*np.exp((S - D)/options.lambda2)
+    # With some parameters, some entries of K may exceed the machine-precision
     # limit in such cases, you may need to adjust the parameters, and/or
     # normalize the input features in sequences or the matrix D Please see the
     # paper for details.
@@ -196,7 +194,7 @@ def OPW_w(X,Y,a,b,lamda1=50,lamda2=0.1,delta=1,VERBOSE=0):
             if Criterion < tolerance or np.isnan(Criterion): # norm of all || . ||_1 differences between the marginal of the current solution with the actual marginals.
                 break
 
-            compt = compt+1
+            compt += 1
             if VERBOSE > 0:
                 print(['Iteration :',str(compt),' Criterion: ',str(Criterion)])
 

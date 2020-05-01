@@ -53,6 +53,7 @@ L = R_I\R_B;
 %% update
 loss_old = 10^8;
 for nIter = 1:max_nIter
+    disp(nIter);
     loss = 0;
     R_A = zeros(dim,dim);
     R_B = zeros(dim,downdim);
@@ -61,6 +62,9 @@ for nIter = 1:max_nIter
         for n = 1:trainsetnum(c)
             seqlen = size(trainset{c}{n},1);
             [dist, T] = OPW_w(trainset{c}{n}*L,virtual_sequence{c},[],[],lambda1,lambda2,delta,0);
+            if isnan(dist)
+                disp('Not a number!');
+            end
             loss = loss + dist;
             for i = 1:seqlen
                 temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);
