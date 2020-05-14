@@ -1,14 +1,15 @@
 import numpy as np
-from align import *
+from .align import OPW_w,dtw2
 import logging
 
-logger = logging.getLogger('MSRAction3DLog')
 
-def RVSML_OT_Learning(dataset,templatenum,options,method='dtw'):
+def RVSML_OT_Learning(dataset,options):
+    logger = logging.getLogger('{}Log'.format(dataset.dataname))
     max_nIter = options.max_iters
     err_limit = options.err_limit
 
     classnum = dataset.classnum
+    templatenum = options.templatenum
     downdim = classnum*templatenum
     trainset = dataset.trainset
     dim = dataset.dim
@@ -28,11 +29,11 @@ def RVSML_OT_Learning(dataset,templatenum,options,method='dtw'):
     N = np.sum(trainsetnum)
     for c in range(classnum):
         for n in range(trainsetnum[c]):
-            seqlen = np.shape(trainset[c][0][n])[0]
+            seqlen = np.shape(trainset[c][n])[0]
             # test = trainset[c][0][n]
             T_ini = np.ones((seqlen,templatenum))/(seqlen*templatenum)
             for i in range(seqlen):
-                a = trainset[c][0][n][i,:]
+                a = trainset[c][n][i,:]
                 temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
                 for j in range(templatenum):
                     R_A += T_ini[i,j]*temp_ra
@@ -49,28 +50,27 @@ def RVSML_OT_Learning(dataset,templatenum,options,method='dtw'):
     ## update
     loss_old = 10**8
     for nIter in range(max_nIter):
-        logger.info("iteration:{}".format(nIter))
+        print("iteration:{}".format(nIter),end=' ')
         loss = 0
         R_A = np.zeros((dim,dim))
         R_B = np.zeros((dim,downdim))
         N = np.sum(trainsetnum)
         for c in range(classnum):
             for n in range(trainsetnum[c]):
-                seqlen = np.shape(trainset[c][0][n])[0]
-                if method == 'dtw':
-                    dist, T = dtw2(np.dot(trainset[c][0][n],L), virtual_sequence[c])
-                elif method == 'opw':
-                    dist, T = OPW_w(np.dot(trainset[c][0][n],L), virtual_sequence[c],[],[],options,0)
-
+                seqlen = np.shape(trainset[c][n])[0]
+                if options.method == 'dtw':
+                    dist, T = dtw2(np.dot(trainset[c][n],L), virtual_sequence[c])
+                elif options.method == 'opw':
+                    dist, T = OPW_w(np.dot(trainset[c][n],L), virtual_sequence[c],[],[],options,0)
                 loss += dist
                 for i in range(seqlen):
-                    a = trainset[c][0][n][i,:]
+                    a = trainset[c][n][i,:]
                     temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
                     for j in range(templatenum):
                         b = virtual_sequence[c][j,:]
                         R_A += T[i,j]*temp_ra
                         R_B += T[i,j]*np.dot(a.reshape((len(a),1)), b.reshape((1, len(b))))
-
+        print(loss/N)
         loss = loss/N + np.trace(np.dot(L.T,L))
         if np.abs(loss - loss_old) < err_limit:
             break
@@ -82,4 +82,4 @@ def RVSML_OT_Learning(dataset,templatenum,options,method='dtw'):
         #L = inv(R_I) * R_B
         L = np.linalg.solve(R_I,R_B)
     # logger.info(time.time()-tic)
-    return L
+    return virtual_sequence,L

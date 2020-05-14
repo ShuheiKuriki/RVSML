@@ -1,5 +1,5 @@
 import numpy as np
-from pdist2 import *
+from .pdist2 import pdist2
 
 def dtw2(t,r):
     #Dynamic Time Warping Algorithm
@@ -9,8 +9,8 @@ def dtw2(t,r):
     #w is the optimal path
     #t is the vector you are testing against
     #r is the vector you are testing
-    N, rows = np.shape(t)
-    M, rows = np.shape(r)
+    N = np.shape(t)[0]
+    M = np.shape(r)[0]
 
     #for n=1:N
     #    for m=1:M
@@ -119,8 +119,8 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # License
     # The code can be used for research purposes only.
 
-    tolerance=.5e-2
-    maxIter= 20
+    tolerance=.5e-3
+    maxIter= 100
     # The maximum number of iterations with a default small value, the
     # tolerance and VERBOSE may not be used
     # Set it to a large value (e.g, 1000 or 10000) to obtain a more precise
@@ -147,8 +147,6 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
             #D(i,j) = sum((X(i,:)-Y(j,:)).^2)
             S[i,j] = options.lambda1/((i/N-j/M)**2+1)
 
-
-
     D = pdist2(X,Y, 'sqeuclidean')
     # In cases the instances in sequences are not normalized and/or are very
     # high-dimensional, the matrix D can be normalized or scaled as follows:
@@ -156,7 +154,7 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     #D = D/10
 
     K = P*np.exp((S - D)/options.lambda2)
-    # With some parameters, some entries of K may exceed the maching-precision
+    # With some parameters, some entries of K may exceed the machine-precision
     # limit in such cases, you may need to adjust the parameters, and/or
     # normalize the input features in sequences or the matrix D Please see the
     # paper for details.
@@ -185,7 +183,7 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # Advances in Neural Information Processing Systems (NIPS) 26, 2013
     while compt < maxIter:
         u = 1/np.dot(ainvK, b/(np.dot(K.T,u)))
-        compt += 1
+        compt = compt+1
         # check the stopping criterion every 20 fixed point iterations
         if compt%20 == 1 or compt == maxIter:
             # split computations to recover right and left scalings.

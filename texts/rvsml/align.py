@@ -1,5 +1,5 @@
 import numpy as np
-from pdist2 import *
+from .pdist2 import pdist2
 
 def dtw2(t,r):
     #Dynamic Time Warping Algorithm
@@ -9,8 +9,8 @@ def dtw2(t,r):
     #w is the optimal path
     #t is the vector you are testing against
     #r is the vector you are testing
-    N, rows = np.shape(t)
-    M, rows = np.shape(r)
+    N = np.shape(t)[0]
+    M = np.shape(r)[0]
 
     #for n=1:N
     #    for m=1:M
@@ -119,8 +119,8 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # License
     # The code can be used for research purposes only.
 
-    tolerance=.5e-2
-    maxIter= 1000
+    tolerance=.5e-3
+    maxIter= 100
     # The maximum number of iterations with a default small value, the
     # tolerance and VERBOSE may not be used
     # Set it to a large value (e.g, 1000 or 10000) to obtain a more precise
