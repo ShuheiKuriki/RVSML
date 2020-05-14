@@ -20,10 +20,13 @@ $RECYCLE.BIN/
 
 datamat/
 Dataset/
+humanRights/
+bible/
 *.mat
 *.log
-*.txt
 *.bin
+*.vec
+*.txt
 .DS_Store
 
 bin
