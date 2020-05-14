@@ -22,6 +22,8 @@ datamat/
 Dataset/
 *.mat
 *.log
+*.txt
+*.bin
 .DS_Store
 
 bin
