@@ -1,43 +1,25 @@
 import numpy as np
-from scipy.io import loadmat
 import time,logging,pickle
 from rvsml.run_RVSML import run_RVSML
 
-name = 'ChaLearn'
-
-# ログの出力名を設定（1）
-logger = logging.getLogger('{}Log'.format(name))
-
-# ログレベルの設定（2）
-logger.setLevel(20)
-
-# ログのコンソール出力の設定（3）
-sh = logging.StreamHandler()
-logger.addHandler(sh)
-
-# ログのファイル出力先を設定（4）
-logging.basicConfig(filename='{}.log'.format(name), format="%(message)s", filemode='w')
-
 class Options:
     def __init__(self):
-        self.max_iters = 1000
-        self.err_limit = 10**(-8)
-        self.lambda0 = 0.0005
-        self.lambda1 = 50
-        self.lambda2 = 0.5
+        self.max_iters, self.err_limit = 1000, 10**(-8)
+        self.lambda0, self.lambda1, self.lambda2 = 0.0005, 50, 0.5
         self.delta = 1
-        self.method = 'opw'
-        self.classify = 'knn'
+        self.method, self.classify = 'opw', 'knn'
         self.templatenum = 4
 
 class Dataset:
     def __init__(self):
         self.dataname = 'ChaLearn'
-        self.classnum = 20
-        self.trainsetdatanum = 6850
-        self.testsetdatanum = 3454
-        self.dim = 100
+        self.classnum, self.dim = 20, 100
+        self.trainsetdatanum, self.testsetdatanum = 6850, 3454
         self.ClassLabel = np.arange(self.classnum).T+1
+        self.trainsetdatalabel, self.testsetdatalabel = [0],[0]
+        self.trainset, self.trainsetdata = [0], [0]
+        self.trainsetnum, self.traindatamean = [0], 0
+        self.testsetdata = [0]
 
     def getlabelfull(self):
         self.trainsetlabelfull = self.getLabel(self.trainsetdatalabel)
@@ -55,13 +37,13 @@ class Dataset:
 
     def centrize(self,traindatamean):
         trainset_m = self.trainset
+        trainsetdata_m = self.trainsetdata
+        testsetdata_m = self.testsetdata
         for c in range(self.classnum):
             for m in range(self.trainsetnum[c]):
                 trainset_m[c][m] = self.trainset[c][m] - traindatamean
-        trainsetdata_m = self.trainsetdata
         for m in range(self.trainsetdatanum):
             trainsetdata_m[m] = self.trainsetdata[m] - traindatamean
-        testsetdata_m = self.testsetdata
         for m in range(self.testsetdatanum):
             testsetdata_m[m] = self.testsetdata[m] - traindatamean
         self.trainset_m = trainset_m
@@ -71,15 +53,17 @@ class Dataset:
 options = Options()
 dataset = Dataset()
 
+logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
+logger.setLevel(20) # ログレベルの設定
+logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
+logging.basicConfig(filename='CharLearn/{}.log'.format(dataset.dataname), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
 pickle_list = ['trainsetnum','trainset','trainsetdatalabel','trainsetdatanum','trainsetdata','testsetdata','testsetdatalabel','traindatamean']
-
 for v in pickle_list:
     exec("with open('ChaLearn/data/{}.bin','rb') as f: dataset.{} = pickle.load(f)".format(v,v))
+
 dataset.getlabelfull()
 dataset.centrize(dataset.traindatamean)
-
-options.templatenum = 4
 
 run_RVSML(dataset,options)
 

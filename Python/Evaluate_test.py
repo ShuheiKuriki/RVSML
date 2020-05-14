@@ -17,8 +17,6 @@ class Options:
         self.method = 'dtw'
         self.classify = 'knn'
 
-options = Options()
-
 class Dataset:
     def __init__(self,N=1,M=1,V=1,T=1):
         self.dataname = 'test'
@@ -65,21 +63,18 @@ class Dataset:
         self.testsetlabelfull = self.getLabel(self.testsetdatalabel)    
         return
 
-# ログの出力名を設定（1）
+options = Options()
 dataset = Dataset()
-logger = logging.getLogger('{}Log'.format(dataset.dataname))
 
-# ログレベルの設定（2）
-logger.setLevel(20)
+logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
+logger.setLevel(20) # ログレベルの設定
+logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
+logging.basicConfig(filename='test/{}.log'.format(dataset.dataname), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
-# ログのコンソール出力の設定（3）
-sh = logging.StreamHandler()
-logger.addHandler(sh)
-
-T=3000 #テストデータ数
+T=100 #テストデータ数
 N=300 #次元数の半分
 M=50 #時系列長
-V=7000 #学習データ数
+V=100 #学習データ数
 
 dataset = Dataset(N,M,V,T)
 logger.info("data load done")
