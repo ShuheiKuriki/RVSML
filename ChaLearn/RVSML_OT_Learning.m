@@ -66,6 +66,7 @@ for nIter = 1:max_nIter
                 disp('Not a number!');
             end
             loss = loss + dist;
+            disp(T);
             for i = 1:seqlen
                 temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);
                 for j = 1:templatenum

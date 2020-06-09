@@ -69,6 +69,7 @@ for nIter = 1:max_nIter
             seqlen = size(trainset{c}{n},1);
             [dist, T] = OPW_w(trainset{c}{n}*L,virtual_sequence{c},[],[],lambda1,lambda2,delta,0);
             loss = loss + dist;
+            disp(T);
             for i = 1:seqlen
                 temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);
                 for j = 1:templatenum

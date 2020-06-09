@@ -2,11 +2,8 @@ import numpy as np
 from .align import OPW_w,dtw2
 import logging
 
-
 def RVSML_OT_Learning(dataset,options):
     logger = logging.getLogger('{}Log'.format(dataset.dataname))
-    max_nIter = options.max_iters
-    err_limit = options.err_limit
 
     classnum = dataset.classnum
     templatenum = options.templatenum
@@ -20,7 +17,7 @@ def RVSML_OT_Learning(dataset,options):
     for c in range(classnum):
         virtual_sequence[c] = np.zeros((templatenum,downdim))
         for a_d in range(templatenum):
-            active_dim = active_dim + 1
+            active_dim += 1
             virtual_sequence[c][a_d,active_dim] = 1
 
     ## inilization
@@ -49,8 +46,7 @@ def RVSML_OT_Learning(dataset,options):
     logger.info("update start")
     ## update
     loss_old = 10**8
-    for nIter in range(max_nIter):
-        print("iteration:{}".format(nIter),end=' ')
+    for nIter in range(options.max_iters):
         loss = 0
         R_A = np.zeros((dim,dim))
         R_B = np.zeros((dim,downdim))
@@ -62,6 +58,7 @@ def RVSML_OT_Learning(dataset,options):
                     dist, T = dtw2(np.dot(trainset[c][n],L), virtual_sequence[c])
                 elif options.method == 'opw':
                     dist, T = OPW_w(np.dot(trainset[c][n],L), virtual_sequence[c],[],[],options,0)
+                # print(T)
                 loss += dist
                 for i in range(seqlen):
                     a = trainset[c][n][i,:]
@@ -70,9 +67,9 @@ def RVSML_OT_Learning(dataset,options):
                         b = virtual_sequence[c][j,:]
                         R_A += T[i,j]*temp_ra
                         R_B += T[i,j]*np.dot(a.reshape((len(a),1)), b.reshape((1, len(b))))
-        print(loss/N)
+        logger.info("iteration:{}, loss:{}".format(nIter,loss/N))
         loss = loss/N + np.trace(np.dot(L.T,L))
-        if np.abs(loss - loss_old) < err_limit:
+        if np.abs(loss - loss_old) < options.err_limit:
             break
         else:
             loss_old = loss
@@ -82,4 +79,6 @@ def RVSML_OT_Learning(dataset,options):
         #L = inv(R_I) * R_B
         L = np.linalg.solve(R_I,R_B)
     # logger.info(time.time()-tic)
-    return virtual_sequence,L
+    dataset.L = L
+    dataset.virtual = virtual_sequence
+    return dataset

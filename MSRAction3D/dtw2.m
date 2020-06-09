@@ -39,7 +39,7 @@ for n=2:N
         D(n,m)=d(n,m)+min([D(n-1,m),D(n-1,m-1),D(n,m-1)]);
     end
 end
-
+% disp(D);
 Dist=D(N,M);
 n=N;
 m=M;

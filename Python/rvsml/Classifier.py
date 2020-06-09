@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from .align import dtw2,OPW_w
-from sklearn import metrics
+# from sklearn import metrics
 import logging,os
 from multiprocessing import Value, Pool
 
@@ -21,8 +21,8 @@ def knn(i,task_per_cpu,k_num,k_pool,dataset,options,rightnum,Macro=None,Micro=No
                 Dist,T = dtw2(dataset.traindownsetdata[m2],dataset.testdownsetdata[j])
             elif options.method == 'opw':
                 Dist,T = OPW_w(dataset.traindownsetdata[m2],dataset.testdownsetdata[j],[],[],options,0)
+            # logger.info(T)
             dis_totrain_scores[m2] = Dist
-
             if np.isnan(Dist):
                 logger.info('NaN distance!')
 
@@ -36,7 +36,7 @@ def knn(i,task_per_cpu,k_num,k_pool,dataset,options,rightnum,Macro=None,Micro=No
 
             # distm2 = np.max(cnt)
             ind = np.argmax(cnt)
-            predict = dataset.ClassLabel[ind]
+            predict = ind+1
             if predict==dataset.testsetdatalabel[j]:
                 rightnum[k_count] += 1
 
@@ -60,16 +60,17 @@ def virtual(i,task_per_cpu,dataset,options,rightnum,Macro=None,Micro=None,):
         for c in range(dataset.classnum):
             #[Dist,T] = Sinkhorn_distance(trainsetdata[m2],testsetdata[j],lambda,0)
             if options.method == 'dtw':
+                print('dtw')
                 Dist,T = dtw2(dataset.virtual[c],dataset.testdownsetdata[j])
             elif options.method == 'opw':
                 Dist,T = OPW_w(dataset.virtual[c],dataset.testdownsetdata[j],[],[],options,0)
             dis_to_virtual[c] = Dist
-
+            # logger.info(T)
             if np.isnan(Dist):
                 logger.info('NaN distance!')
 
         ind = np.argmin(dis_to_virtual)
-        predict = dataset.ClassLabel[ind]
+        predict = ind+1
         if predict==dataset.testsetdatalabel[j]:
             rightnum += 1
 
@@ -90,7 +91,7 @@ def Classifier(dataset,options):
     # Macro = Value(ctypes.c_float * dataset.testsetdatanum)
     # Micro = Value(ctypes.c_float * dataset.testsetdatanum)
 
-    cpu_count = os.cpu_count()
+    cpu_count = 2
     task_per_cpu = dataset.testsetdatanum//(cpu_count-1)+1
 
     if options.classify == 'knn':

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.io import loadmat
-import time
+import time,os
 from rvsml.run_RVSML import run_RVSML
 import logging
 from random import sample,randint
@@ -16,6 +16,7 @@ class Options:
         self.delta = 1
         self.method = 'dtw'
         self.classify = 'knn'
+        self.cpu_count = os.cpu_count()
 
 class Dataset:
     def __init__(self,N=1,M=1,V=1,T=1):
@@ -71,13 +72,13 @@ logger.setLevel(20) # ログレベルの設定
 logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
 logging.basicConfig(filename='test/{}.log'.format(dataset.dataname), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
-T=100 #テストデータ数
-N=300 #次元数の半分
-M=50 #時系列長
-V=100 #学習データ数
+T=3 #テストデータ数
+N=3 #次元数
+M=3 #時系列長
+V=3 #学習データ数
 
 dataset = Dataset(N,M,V,T)
 logger.info("data load done")
 
-options.templatenum = 4
+options.templatenum = 5
 run_RVSML(dataset,options)

@@ -154,7 +154,6 @@ def distEucSq(X,Y,x,y):
     for j in range(x[0]):
         YYRep[j] = YY
     D = XXRep + YYRep - 2*np.dot(X,Y.T)
-
     return D
 
 # X = np.array([[1,0,4],[2,3,5],[6,4,2]])

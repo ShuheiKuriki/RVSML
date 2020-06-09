@@ -71,6 +71,7 @@ for nIter = 1:max_nIter
 %             disp(size(virtual_sequence{c}'));
             [dist, T] = dtw2((trainset{c}{n}*L)',virtual_sequence{c}');
             loss = loss + dist;
+%             disp(T);
             for i = 1:seqlen
                 temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);
                 for j = 1:templatenum
@@ -80,7 +81,7 @@ for nIter = 1:max_nIter
             end
         end
     end
-    
+    disp(loss/N);
     loss = loss/N + trace(L'*L);
     if abs(loss - loss_old) < err_limit
         break;

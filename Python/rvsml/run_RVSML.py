@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.io import loadmat
 import time
 from .Classifier import Classifier
 from .RVSML_OT_Learning import RVSML_OT_Learning
@@ -11,9 +10,7 @@ def run_RVSML(dataset,options):
     logger.info("{} start".format(options.method))
 
     tic = time.time()
-    virtual,L = RVSML_OT_Learning(dataset,options)
-    dataset.virtual = virtual
-    dataset.L = L
+    dataset = RVSML_OT_Learning(dataset,options)
     RVSML_time = time.time() - tic
     logger.info("{} lerning done".format(options.method))
     ## classification with the learned metric
@@ -53,4 +50,5 @@ def run_RVSML(dataset,options):
     for acc in accs:
         logger.info('Accuracy is {:.4f} \n'.format(acc))
 
+    return dataset
     # print("debug")

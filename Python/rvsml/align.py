@@ -11,20 +11,6 @@ def dtw2(t,r):
     #r is the vector you are testing
     N = np.shape(t)[0]
     M = np.shape(r)[0]
-
-    #for n=1:N
-    #    for m=1:M
-    #        d[n,m)=(t(n)-r(m))^2
-    #
-    #
-
-    # d = zeros(N,M)
-    # for i in range(N)
-    #     for j in range(M):
-    #          d[i,j) = sum((t(:,i)-r(:,j)).^2)
-    #
-    #
-
     d = pdist2(t, r, 'sqeuclidean')
 
     #d=(repmat(t(:),1,M)-repmat(r(:)',N,1)).^2 #this replaces the nested for loops from above Thanks Georg Schmitz
@@ -40,7 +26,6 @@ def dtw2(t,r):
 
     for n in range(1,N):
         for m in range(1,M):
-            # print(D[n-1,m],D[n-1,m-1],D[n,m-1])
             D[n,m]=d[n,m]+min(D[n-1,m],D[n-1,m-1],D[n,m-1])
 
     Dist=D[-1,-1]
@@ -77,8 +62,10 @@ def dtw2(t,r):
         T[w[temp_t][0],w[temp_t][1]] = 1
 
     return Dist,T
-
-
+if __name__ == '__main__':
+    a = np.array([[1,0,0],[0,1,0],[0,0,1]])
+    b = np.array([[1,0,0],[1,0,0],[0,1,0],[0,1,0],[0,0,1],[0,0,1]])
+    dtw2(a,b)
 def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # Compute the Order-Preserving Wasserstein Distance (OPW) for two sequences
     # X and Y
@@ -119,7 +106,7 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # License
     # The code can be used for research purposes only.
 
-    tolerance=.5e-3
+    tolerance=.5e-5
     maxIter= 100
     # The maximum number of iterations with a default small value, the
     # tolerance and VERBOSE may not be used
