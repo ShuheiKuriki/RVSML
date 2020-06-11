@@ -44,7 +44,7 @@ testsetlabel = testsetdatalabel;
 % RVSML_opw_acc_1 = RVSML_opw_acc(1);
 
 templatenum = 4;
-lambda = 0.096;
+lambda = 0.1;
 tic;
 L = RVSML_OT_Learning_dtw(trainset,templatenum,lambda,options);
 RVSML_dtw_time = toc;

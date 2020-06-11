@@ -3,6 +3,7 @@ from rvsml.RVSML_OT_Learning import RVSML_OT_Learning
 import logging,pickle,time,os,argparse,torch
 from src.utils import bool_flag
 from src.evaluation.word_translation import get_word_translation_accuracy_for_random
+from statistics import *
 # from learning import learning
 
 if 'args':
@@ -19,10 +20,17 @@ if 'args':
     parser.add_argument("--langnum", type=int, default=3, help="the number of languages")
     parser.add_argument("--classnum", type=int, default=30, help="the number of classes")
     parser.add_argument("--seqlen", type=int, default=30, help="the length of the sequence")
-    parser.add_argument("--v_rate", type=float, default=1, help="the rate of the templatenum")
     parser.add_argument("--swap", type=float, default=0, help="the rate of swap")
     parser.add_argument("--w2v_dim", type=int, default=300, help="the dimension of word2vec")
     parser.add_argument("--max_vocab", type=int, default=10000, help="the number of vocablaries")
+    # highpara
+    parser.add_argument("--method", type=str, default='dtw', help="alignment method")
+    parser.add_argument("--v_rate", type=float, default=1, help="the rate of the templatenum")
+    parser.add_argument("--lambda0", type=float, default=0.01, help="the parameter of the rotation matrix")
+    parser.add_argument("--lambda1", type=float, default=50, help="the parameter of the inverse difference moment")
+    parser.add_argument("--lambda2", type=float, default=0.1, help="the parameter of the standard distribution")
+    parser.add_argument("--delta", type=float, default=1, help="variance of the standard distribution")
+
     # mapping
     parser.add_argument("--map_id_init", type=bool_flag, default=True, help="Initialize the mapping as an identity matrix")
     parser.add_argument("--map_beta", type=float, default=0.001, help="Beta for orthogonalizan")
@@ -79,12 +87,11 @@ if 'args':
 class Options:
     def __init__(self):
         self.max_iters, self.err_limit = 1000, 10**(-4)
-        self.method = 'dtw'
+        self.method = params.method
         if self.method == 'dtw':
-            self.lambda0 = 0.01
+            self.lambda0 = params.lambda0
         if self.method == 'opw':
-            self.lambda0, self.lambda1, self.lambda2 = 0.01, 50, 0.1
-            self.delta = 1
+            self.lambda0, self.lambda1, self.lambda2, self.delta = params.lambda0, params.lambda1, params.lambda2, params.delta
         self.templatenum = int(params.seqlen*params.v_rate)
         self.cpu_count = os.cpu_count()//2
 
@@ -140,16 +147,28 @@ if 'logger':
     logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
     logger.setLevel(20) # ログレベルの設定
     logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
-    logging.basicConfig(filename='log/{}/c{}_sl{}_wd{}_swap{}_vr{}_mv{}.log'.format(dataset.dataname,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+    dirname = 'log/{}/{}/c{}_sl{}_wd{}/'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+    if params.method == 'dtw':
+        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/swap{}_vr{}_l0-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.lambda0,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+    elif params.method == 'opw':
+        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/swap{}_vr{}_l0-{}_l1-{}_l2-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.lambda0,params.lambda1,params.lambda2,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
-dataset = RVSML_OT_Learning(dataset,options)
+avgs = []
+for i in range(5):
+    logger.info(i)
+    dataset = Dataset()
+    dataset = RVSML_OT_Learning(dataset,options)
 
-learned_emb = [0]*dataset.langnum
-for l in range(dataset.langnum):
-    learned_emb[l] = np.dot(dataset.embeddings[l],dataset.L)
-dataset.learned_emb = learned_emb
+    learned_emb = [0]*dataset.langnum
+    for l in range(dataset.langnum):
+        learned_emb[l] = np.dot(dataset.embeddings[l],dataset.L)
+    dataset.learned_emb = learned_emb
 
-get_word_translation_accuracy_for_random(dataset,options)
+    avg = get_word_translation_accuracy_for_random(dataset,options)
+    avgs.append(avg)
+logger.info('mean:{}, std:{}'.format(mean(avgs),stdev(avgs)))
 
 if False:
     import matplotlib.pyplot as plt

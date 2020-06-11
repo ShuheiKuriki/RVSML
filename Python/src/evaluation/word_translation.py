@@ -10,6 +10,7 @@ from logging import getLogger
 import numpy as np
 import torch
 from multiprocessing import Pool
+from statistics import *
 
 from ..utils import get_nn_avg_dist
 
@@ -180,7 +181,7 @@ def get_word_translation_accuracy_for_random(dataset,options):
     cpu_count = options.cpu_count
     word_per_cpu = dataset.max_vocab//(cpu_count-1)+1
     acc = np.zeros((langnum,langnum))
-    avg = 0
+    accs = []
     for i in range(langnum):
         for j in range(langnum):
             print(i,j)
@@ -194,7 +195,9 @@ def get_word_translation_accuracy_for_random(dataset,options):
             for rs in rightnums:
                 rightnum += rs
             acc[i][j] = rightnum/dataset.max_vocab
-            avg += acc[i][j]
+            accs.append(acc[i][j])
             print('acc',acc[i][j])
     logger.info(acc)
-    logger.info(avg/(langnum*(langnum-1)))
+    avg = mean(accs)
+    logger.info(avg)
+    return avg

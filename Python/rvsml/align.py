@@ -11,8 +11,7 @@ def dtw2(t,r):
     #r is the vector you are testing
     N = np.shape(t)[0]
     M = np.shape(r)[0]
-    d = pdist2(t, r, 'sqeuclidean')
-
+    d = pdist2(t, r, 'cosine')
     #d=(repmat(t(:),1,M)-repmat(r(:)',N,1)).^2 #this replaces the nested for loops from above Thanks Georg Schmitz
 
     D = np.zeros(np.shape(d))
@@ -134,7 +133,7 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
             #D(i,j) = sum((X(i,:)-Y(j,:)).^2)
             S[i,j] = options.lambda1/((i/N-j/M)**2+1)
 
-    D = pdist2(X,Y, 'sqeuclidean')
+    D = pdist2(X,Y, 'cosine')
     # In cases the instances in sequences are not normalized and/or are very
     # high-dimensional, the matrix D can be normalized or scaled as follows:
     # D = D/max(max(D))  D = D/(10^2)
