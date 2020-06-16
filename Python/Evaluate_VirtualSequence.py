@@ -4,7 +4,7 @@ import logging,pickle,time,os,argparse,torch
 from src.utils import bool_flag
 from src.evaluation.word_translation import get_word_translation_accuracy_for_random
 from statistics import *
-np.set_printoptions(precision=3,suppress=True)
+# from learning import learning
 
 if 'args':
     # main
@@ -18,17 +18,16 @@ if 'args':
     parser.add_argument("--export", type=str, default="txt", help="Export embeddings after training (txt / pth)")
     # data
     parser.add_argument("--langnum", type=int, default=3, help="the number of languages")
-    parser.add_argument("--classnum", type=int, default=30, help="the number of classes")
-    parser.add_argument("--seqlen", type=int, default=30, help="the length of the sequence")
-    parser.add_argument("--swap", type=float, default=0, help="the rate of swap")
-    parser.add_argument("--w2v_dim", type=int, default=300, help="the dimension of word2vec")
-    parser.add_argument("--max_vocab", type=int, default=10000, help="the number of vocablaries")
-    # highpara
+    parser.add_argument("--classnum", type=int, default=10, help="the number of classes")
+    parser.add_argument("--seqlen", type=int, default=10, help="the length of the sequence")
+    parser.add_argument("--w2v_dim", type=int, default=50, help="the dimension of word2vec")
+    parser.add_argument("--max_vocab", type=int, default=1000, help="the number of vocablaries")
+    # hypara
     parser.add_argument("--method", type=str, default='dtw', help="alignment method")
     parser.add_argument("--v_rate", type=float, default=1, help="the rate of the templatenum")
-    parser.add_argument("--lambda0", type=float, default=0.01, help="the parameter of the rotation matrix")
-    parser.add_argument("--lambda1", type=float, default=50, help="the parameter of the inverse difference moment")
-    parser.add_argument("--lambda2", type=float, default=0.1, help="the parameter of the standard distribution")
+    parser.add_argument("--lambda0", type=float, default=0.00001, help="the parameter of the rotation matrix")
+    parser.add_argument("--lambda1", type=float, default=2, help="the parameter of the inverse difference moment")
+    parser.add_argument("--lambda2", type=float, default=2, help="the parameter of the standard distribution")
     parser.add_argument("--delta", type=float, default=1, help="variance of the standard distribution")
 
     # mapping
@@ -92,12 +91,12 @@ class Options:
             self.lambda0 = params.lambda0
         if self.method == 'opw':
             self.lambda0, self.lambda1, self.lambda2, self.delta = params.lambda0, params.lambda1, params.lambda2, params.delta
-        self.templatenum = int(params.seqlen*params.v_rate)
+        self.templatenum = int(params.seqlen*2*params.v_rate)
         self.cpu_count = os.cpu_count()//2
 
 class Dataset:
     def __init__(self):
-        self.dataname = 'random'
+        self.dataname = 'virtual_sequence'
         self.langnum,self.classnum,self.seqlen,self.max_vocab,self.w2v_dim = params.langnum,params.classnum,params.seqlen,params.max_vocab,params.w2v_dim
         self.dim = params.w2v_dim*params.langnum
         self.trainsetdatanum = params.langnum * params.classnum
@@ -124,12 +123,9 @@ class Dataset:
             sents.append(sum(ss))
 
         data = [[0]*self.langnum for _ in range(self.classnum)]
+        order = list(map(int,np.arange(0,self.seqlen,0.5)))
         for c in range(self.classnum):
             for l in range(self.langnum):
-                order = np.arange(self.seqlen)
-                for s in range(0,self.seqlen,2):
-                    if np.random.rand()<params.swap:
-                        order[s],order[s+1] = order[s+1],order[s]
                 data[c][l] = embeddings[l][sentences[c][order]]
 
         self.embeddings = embeddings
@@ -151,9 +147,9 @@ if 'logger':
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
     if params.method == 'dtw':
-        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/swap{}_vr{}_l0-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.lambda0,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/vr{}_l0-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.v_rate,params.lambda0,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
     elif params.method == 'opw':
-        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/swap{}_vr{}_l0-{}_l1-{}_l2-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.lambda0,params.lambda1,params.lambda2,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/vr{}_l0-{}_l1-{}_l2-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.v_rate,params.lambda0,params.lambda1,params.lambda2,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
 avgs = []
 for i in range(5):

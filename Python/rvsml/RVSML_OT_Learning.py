@@ -58,7 +58,7 @@ def RVSML_OT_Learning(dataset,options):
                     dist, T = dtw2(np.dot(trainset[c][n],L), virtual_sequence[c])
                 elif options.method == 'opw':
                     dist, T = OPW_w(np.dot(trainset[c][n],L), virtual_sequence[c],[],[],options,0)
-                # logger.info(T)
+                logger.info(T)
                 loss += dist
                 for i in range(seqlen):
                     a = trainset[c][n][i,:]
