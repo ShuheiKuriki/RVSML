@@ -101,6 +101,14 @@ def distCosine(X,Y,x,y):
     # print(X.dtype)
     # if( ~isa(X,'double') or ~isa(Y,'double')):
     #   error( 'Inputs must be of type double')
+    for i in range(x[0]):
+        if np.sum(X[i])==0:
+            for j in range(x[1]):
+                X[i,j] = 1
+    for i in range(y[0]):
+        if np.sum(Y[i])==0:
+            for j in range(y[1]):
+                Y[i,j] = 1
     X1 = np.zeros(x)
     for i in range(x[1]):
         X1[:,i] = np.sqrt(np.sum(X*X,axis=1))
@@ -108,9 +116,10 @@ def distCosine(X,Y,x,y):
     Y1 = np.zeros(y)
     for i in range(y[1]):
         Y1[:,i] = np.sqrt(np.sum(Y*Y,axis=1))
-    # print(Y1)
     Y = Y/Y1
+    # print(np.shape(X),np.shape(Y.T))
     D = 1 - np.dot(X,Y.T)
+    # print(D)
     return D
 
 def distEmd(X,Y,x,y):

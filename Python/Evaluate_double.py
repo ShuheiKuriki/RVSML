@@ -4,7 +4,7 @@ import logging,pickle,time,os,argparse,torch
 from src.utils import bool_flag
 from src.evaluation.word_translation import get_word_translation_accuracy_for_random
 from statistics import *
-np.set_printoptions(precision=2,suppress=True,threshold=10000)
+np.set_printoptions(precision=2,suppress=True)
 
 if 'args':
     # main
@@ -20,6 +20,7 @@ if 'args':
     parser.add_argument("--langnum", type=int, default=3, help="the number of languages")
     parser.add_argument("--classnum", type=int, default=10, help="the number of classes")
     parser.add_argument("--seqlen", type=int, default=10, help="the length of the sequence")
+    parser.add_argument("--double_num", type=int, default=5, help="the length of the sequence")
     parser.add_argument("--w2v_dim", type=int, default=50, help="the dimension of word2vec")
     parser.add_argument("--max_vocab", type=int, default=1000, help="the number of vocablaries")
     # hypara
@@ -91,12 +92,12 @@ class Options:
             self.lambda0 = params.lambda0
         if self.method == 'opw':
             self.lambda0, self.lambda1, self.lambda2, self.delta = params.lambda0, params.lambda1, params.lambda2, params.delta
-        self.templatenum = int(params.seqlen*2*params.v_rate)
+        self.templatenum = int(params.seqlen*params.v_rate)
         self.cpu_count = os.cpu_count()//2
 
 class Dataset:
     def __init__(self):
-        self.dataname = 'virtual_sequence'
+        self.dataname = 'double'
         self.langnum,self.classnum,self.seqlen,self.max_vocab,self.w2v_dim = params.langnum,params.classnum,params.seqlen,params.max_vocab,params.w2v_dim
         self.dim = params.w2v_dim*params.langnum
         self.trainsetdatanum = params.langnum * params.classnum
@@ -123,9 +124,17 @@ class Dataset:
             sents.append(sum(ss))
 
         data = [[0]*self.langnum for _ in range(self.classnum)]
-        order = list(map(int,np.arange(0,self.seqlen,0.5)))
+
         for c in range(self.classnum):
             for l in range(self.langnum):
+                nums = [1]*self.seqlen
+                nums[2] = params.double_num
+                order = []
+                for i in range(self.seqlen):
+                    for _ in range(nums[i]):
+                        order.append(i)
+                order = np.array(order)
+                # print(order)
                 data[c][l] = embeddings[l][sentences[c][order]]
 
         self.embeddings = embeddings
@@ -143,15 +152,22 @@ if 'logger':
     logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
     logger.setLevel(20) # ログレベルの設定
     logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
-    dirname = 'log/{}/{}/c{}_sl{}_wd{}/'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim)
+    dirname = 'log/{}/'.format(dataset.dataname)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+    dirname = 'log/{}/{}/'.format(dataset.dataname,params.method)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+    dirname = 'log/{}/{}/double{}/'.format(dataset.dataname,params.method,params.double_num)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+    dirname = 'log/{}/{}/double{}/c{}_sl{}_wd{}/'.format(dataset.dataname,params.method,params.double_num,params.classnum,params.seqlen,params.w2v_dim)
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
     if params.method == 'dtw':
-        filename = 'log/{}/{}/c{}_sl{}_wd{}/vr{}_l0-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.v_rate,params.lambda0,params.max_vocab)
-        print(filename)
-        logging.basicConfig(filename=filename, format="%(message)s", filemode='w') # ログのファイル出力先を設定
+        logging.basicConfig(filename='log/{}/{}/double{}/c{}_sl{}_wd{}/vr{}_l0-{}_mv{}.log'.format(dataset.dataname,params.method,params.double_num,params.classnum,params.seqlen,params.w2v_dim,params.v_rate,params.lambda0,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
     elif params.method == 'opw':
-        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/vr{}_l2-{}_l0-{}_l1-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.v_rate,params.lambda2,params.lambda0,params.lambda1,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+        logging.basicConfig(filename='log/{}/{}/double{}/c{}_sl{}_wd{}/vr{}_l2-{}_l0-{}_l1-{}_mv{}.log'.format(dataset.dataname,params.method,params.double_num,params.classnum,params.seqlen,params.w2v_dim,params.v_rate,params.lambda2,params.lambda0,params.lambda1,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
 avgs = []
 for i in range(5):

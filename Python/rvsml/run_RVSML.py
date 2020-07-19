@@ -11,7 +11,7 @@ def run_RVSML(dataset,options):
 
     tic = time.time()
     dataset = RVSML_OT_Learning(dataset,options)
-    RVSML_time = time.time() - tic
+    learning_time = time.time() - tic
     logger.info("{} lerning done".format(options.method))
     ## classification with the learned metric
     # print("Classification start")
@@ -21,34 +21,38 @@ def run_RVSML(dataset,options):
     for j in range(dataset.classnum):
         traindownset[j] = [0]*dataset.trainsetnum[j]
         for m in range(dataset.trainsetnum[j]):
-            downdata = np.dot(dataset.trainset[j][m],L)
+            downdata = np.dot(dataset.trainset[j][m],dataset.L)
             traindownset[j][m] = downdata
             traindownsetdata.append(downdata)
 
     for j in range(dataset.testsetdatanum):
-        testdownsetdata[j] = np.dot(dataset.testsetdata[j], L)
+        testdownsetdata[j] = np.dot(dataset.testsetdata[j], dataset.L)
 
     dataset.traindownset = traindownset
     dataset.traindownsetdata = traindownsetdata
     dataset.testdownsetdata = testdownsetdata
 
-    # RVSML_macro,RVSML_micro
-    accs,knn_time,knn_average_time = Classifier(dataset,options)
-    # accs_1 = accs[0]
+    knn_accs,knn_time,knn_average_time = Classifier(dataset,options)
+    options.classify = 'virtual'
+    virtual_accs,virtual_time,virtual_average_time = Classifier(dataset,options)
 
     logger.info("{} Classification done".format(options.method))
 
     logger.info("{} done".format(options.method))
 
-    logger.info('Training time is {:.4f} \n'.format(RVSML_time))
+    logger.info('Training time is {:.4f} \n'.format(learning_time))
     logger.info('Classification using 1 nearest neighbor classifier:\n')
     # logger.info('MAP macro is {:.4f}, MAP micro is {:.4f} \n'.format(RVSML_macro, RVSML_micro))
     # logger.info('Accuracy is .4f \n',accs_1)
     logger.info('knn_average_time is {:.4f} \n'.format(knn_average_time))
     logger.info('knn_total_time is {:.4f} \n'.format(knn_time))
+    logger.info('virtual_average_time is {:.4f} \n'.format(virtual_average_time))
+    logger.info('virtual_total_time is {:.4f} \n'.format(virtual_time))
 
-    for acc in accs:
-        logger.info('Accuracy is {:.4f} \n'.format(acc))
+    for acc in knn_accs:
+        logger.info('knn accuracy is {:.4f} \n'.format(acc))
+    for acc in virtual_accs:
+        logger.info('virtual accuracy is {:.4f} \n'.format(acc))
 
     return dataset
     # print("debug")

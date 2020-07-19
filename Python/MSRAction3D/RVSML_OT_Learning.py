@@ -49,7 +49,6 @@ def RVSML_OT_Learning(dataset,templatenum,options,method='dtw'):
     ## update
     loss_old = 10**8
     for nIter in range(max_nIter):
-        logger.info("iteration:{}".format(nIter))
         loss = 0
         R_A = np.zeros((dim,dim))
         R_B = np.zeros((dim,downdim))
@@ -69,9 +68,10 @@ def RVSML_OT_Learning(dataset,templatenum,options,method='dtw'):
                         b = virtual_sequence[c][j,:]
                         R_A += T[i,j]*temp_ra
                         R_B += T[i,j]*np.dot(a.reshape((len(a),1)), b.reshape((1, len(b))))
-
+        logger.info("iteration:{}, loss:{}".format(nIter,loss/N))
         loss = loss/N + np.trace(np.dot(L.T,L))
         if np.abs(loss - loss_old) < err_limit:
+            logger.info(T)
             break
         else:
             loss_old = loss

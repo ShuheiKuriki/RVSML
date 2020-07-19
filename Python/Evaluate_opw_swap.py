@@ -1,4 +1,4 @@
-from rvsml.align import OPW_w
+from rvsml.align import OPW_w,greedy
 import argparse,logging,os
 import numpy as np
 
@@ -18,15 +18,14 @@ class Options:
 class Dataset:
     def __init__(self):
         self.dataname = 'opw_swap'
-        self.dim = 6
+        self.dim = 10
         self.data1 = np.eye(self.dim)
-        self.data2 = np.zeros((self.dim,self.dim))
-        for i in range(0,self.dim-1,2):
-            if np.random.rand()<0.5:
-                self.data2[i,i+1],self.data2[i+1,i] = 1,1
-            else:
-                self.data2[i,i],self.data2[i+1,i+1] = 1,1
-                
+        self.data2 = np.eye(self.dim)
+        self.data2[0][5],self.data2[0][0] = 1,0
+        self.data2[5][0],self.data2[5][5] = 1,0
+        self.data2[2][7],self.data2[2][2] = 1,0
+        self.data2[7][2],self.data2[7][7] = 1,0
+
 options = Options()
 data = Dataset()
 
@@ -38,7 +37,7 @@ if not os.path.isdir(dirname):
     os.mkdir(dirname)
 logging.basicConfig(filename='log/{}/{}_l2-{}_l1-{}.log'.format(data.dataname,data.dim,options.lambda2,options.lambda1), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
-dist, T = OPW_w(data.data1, data.data2,[],[],options,1)
+dist, T = greedy(data.data1, data.data2)
 logger.info(data.data2)
 logger.info(T)
 logger.info(dist)

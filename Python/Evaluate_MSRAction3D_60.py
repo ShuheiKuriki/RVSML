@@ -1,15 +1,16 @@
 import numpy as np
 from rvsml.run_RVSML import run_RVSML
 import logging,pickle,time,os
-
+np.set_printoptions(precision=3,suppress=True)
 class Options:
     def __init__(self):
-        self.max_iters, self.err_limit = 1000, 10**(-4)
-        self.method, self.classify  = 'dtw', 'virtual'
+        self.max_iters, self.err_limit = 100, 10**(-4)
+        self.method, self.classify  = 'dtw', 'knn'
+        self.init = 'uniform'
         if self.method == 'dtw':
             self.lambda0 = 0.1
         if self.method == 'opw':
-            self.lambda0, self.lambda1, self.lambda2 = 0.01, 50, 0.1
+            self.lambda0, self.lambda1, self.lambda2 = 0.01, 50, 1
             self.delta = 1
         self.templatenum = 4
         self.cpu_count = os.cpu_count()//2

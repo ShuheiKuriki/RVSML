@@ -4,7 +4,7 @@ import logging,pickle,time,os,argparse,torch
 from src.utils import bool_flag
 from src.evaluation.word_translation import get_word_translation_accuracy_for_random
 from statistics import *
-np.set_printoptions(precision=3,suppress=True)
+np.set_printoptions(precision=3,suppress=True, threshold=10000)
 
 if 'args':
     # main
@@ -18,18 +18,23 @@ if 'args':
     parser.add_argument("--export", type=str, default="txt", help="Export embeddings after training (txt / pth)")
     # data
     parser.add_argument("--langnum", type=int, default=3, help="the number of languages")
-    parser.add_argument("--classnum", type=int, default=30, help="the number of classes")
-    parser.add_argument("--seqlen", type=int, default=30, help="the length of the sequence")
+    parser.add_argument("--classnum", type=int, default=10, help="the number of classes")
+    parser.add_argument("--seqlen", type=int, default=10, help="the length of the sequence")
     parser.add_argument("--swap", type=float, default=0, help="the rate of swap")
-    parser.add_argument("--w2v_dim", type=int, default=300, help="the dimension of word2vec")
-    parser.add_argument("--max_vocab", type=int, default=10000, help="the number of vocablaries")
+    parser.add_argument("--w2v_dim", type=int, default=50, help="the dimension of word2vec")
+    parser.add_argument("--max_vocab", type=int, default=1000, help="the number of vocablaries")
+    parser.add_argument("--freq_rate", type=float, default=0, help="the number of vocablaries")
+    parser.add_argument("--perturb", type=float, default=0, help="the rate of perturbation")
     # highpara
-    parser.add_argument("--method", type=str, default='dtw', help="alignment method")
+    parser.add_argument("--method", type=str, default='opw', help="alignment method")
     parser.add_argument("--v_rate", type=float, default=1, help="the rate of the templatenum")
-    parser.add_argument("--lambda0", type=float, default=0.01, help="the parameter of the rotation matrix")
-    parser.add_argument("--lambda1", type=float, default=50, help="the parameter of the inverse difference moment")
+    parser.add_argument("--lambda0", type=float, default=0.1, help="the parameter of the rotation matrix")
+    parser.add_argument("--lambda1", type=float, default=0.1, help="the parameter of the inverse difference moment")
     parser.add_argument("--lambda2", type=float, default=0.1, help="the parameter of the standard distribution")
     parser.add_argument("--delta", type=float, default=1, help="variance of the standard distribution")
+    parser.add_argument("--init_delta", type=float, default=0.1, help="variance of the standard distribution")
+    parser.add_argument("--reg", type=float, default=1, help="regularization parameter of sinkhorn distance")
+    parser.add_argument("--init", type=str, default='uniform', help="initial by random")
 
     # mapping
     parser.add_argument("--map_id_init", type=bool_flag, default=True, help="Initialize the mapping as an identity matrix")
@@ -86,51 +91,62 @@ if 'args':
 
 class Options:
     def __init__(self):
-        self.max_iters, self.err_limit = 1000, 10**(-4)
+        self.max_iters, self.err_limit = 1000, 10**(-6)
         self.method = params.method
-        if self.method == 'dtw':
-            self.lambda0 = params.lambda0
         if self.method == 'opw':
-            self.lambda0, self.lambda1, self.lambda2, self.delta = params.lambda0, params.lambda1, params.lambda2, params.delta
+            self.lambda1, self.lambda2, self.delta = params.lambda1, params.lambda2, params.delta
+        self.lambda0 = params.lambda0
         self.templatenum = int(params.seqlen*params.v_rate)
-        self.cpu_count = os.cpu_count()//2
+        self.cpu_count = os.cpu_count()//3
+        self.init = params.init
+        self.init_delta = params.init_delta
+        self.classify = 'knn'
 
 class Dataset:
     def __init__(self):
-        self.dataname = 'random'
+        self.dataname = 'init_'+params.init
         self.langnum,self.classnum,self.seqlen,self.max_vocab,self.w2v_dim = params.langnum,params.classnum,params.seqlen,params.max_vocab,params.w2v_dim
         self.dim = params.w2v_dim*params.langnum
         self.trainsetdatanum = params.langnum * params.classnum
         self.trainsetnum = [params.langnum]*params.classnum
         self.testsetdatanum = self.trainsetdatanum
-        self.trainsetdatalabel = [1+ i//params.langnum for i in range(self.trainsetdatanum)]
+        self.trainsetdatalabel = [1 + i//params.langnum for i in range(self.trainsetdatanum)]
         self.testsetdatalabel = self.trainsetdatalabel
         self.L = 0
-        src_embs = np.random.rand(self.max_vocab, self.w2v_dim)*2-1
+        self.real_vocab = self.max_vocab-int(params.freq_rate * self.max_vocab)
+        src_embs = np.zeros((self.real_vocab, self.w2v_dim))
+        src_embs = np.random.rand(self.real_vocab, self.w2v_dim)*2-1
 
         embeddings = [0]*self.langnum
         for l in range(self.langnum):
-            embeddings[l] = np.zeros((self.max_vocab,self.dim))
+            embeddings[l] = np.zeros((self.real_vocab,self.dim))
             mapping = np.random.rand(self.w2v_dim, self.w2v_dim)*2-1
-            embeddings[l][:,self.w2v_dim*l:self.w2v_dim*(l+1)] = np.dot(src_embs,mapping)
+            embeddings[l][:,self.w2v_dim*l:self.w2v_dim*(l+1)] = np.dot(src_embs,mapping)+np.random.rand(self.real_vocab, self.w2v_dim)*params.perturb
 
-        sentences = [0]*self.classnum
+        self.sentences = [0]*self.classnum
         sents = []
         for c in range(self.classnum):
             ss = np.random.randint(0,self.max_vocab,(self.seqlen))
+            for s in range(self.seqlen):
+                if ss[s]>=self.real_vocab:
+                    ss[s] = 0
             while sum(ss) in sents:
                 ss = np.random.randint(0,self.max_vocab,(self.seqlen))
-            sentences[c] = ss
+                for s in range(self.seqlen):
+                    if ss[s]>=self.real_vocab:
+                        ss[s] = 0
+            self.sentences[c] = ss
             sents.append(sum(ss))
 
         data = [[0]*self.langnum for _ in range(self.classnum)]
+        orders = [[np.arange(self.seqlen) for _ in range(self.langnum)] for _ in range(self.classnum)]
         for c in range(self.classnum):
             for l in range(self.langnum):
-                order = np.arange(self.seqlen)
                 for s in range(0,self.seqlen,2):
                     if np.random.rand()<params.swap:
-                        order[s],order[s+1] = order[s+1],order[s]
-                data[c][l] = embeddings[l][sentences[c][order]]
+                        orders[c][l][s],orders[c][l][s+1] = orders[c][l][s+1],orders[c][l][s]
+                data[c][l] = embeddings[l][self.sentences[c][orders[c][l]]]
+        self.orders = orders
 
         self.embeddings = embeddings
         self.trainset = data
@@ -140,23 +156,34 @@ class Dataset:
                 self.trainsetdata.append(data[c][l])
         self.testsetdata = self.trainsetdata
 
-options = Options()
 dataset = Dataset()
+options = Options()
 
 if 'logger':
     logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
     logger.setLevel(20) # ログレベルの設定
     logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
-    dirname = 'log/{}/{}/c{}_sl{}_wd{}/'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim)
+    dirname = 'log/{}/'.format(dataset.dataname)
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
-    if params.method == 'dtw':
-        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/swap{}_vr{}_l0-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.lambda0,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
-    elif params.method == 'opw':
-        logging.basicConfig(filename='log/{}/{}/c{}_sl{}_wd{}/swap{}_vr{}_l0-{}_l1-{}_l2-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.swap,params.v_rate,params.lambda0,params.lambda1,params.lambda2,params.max_vocab), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+    dirname = 'log/{}/{}/'.format(dataset.dataname,params.method)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+    dirname = 'log/{}/{}/c{}_sl{}_wd{}_f{}_swap{}_per{}/'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.freq_rate,params.swap,params.perturb)
+    if not os.path.isdir(dirname):
+        os.mkdir(dirname)
+    if params.method == 'opw':
+        filename='log/{}/{}/c{}_sl{}_wd{}_f{}_swap{}_per{}/vr{}_l2-{}_del{}_init-del{}_l0-{}_l1-{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.freq_rate,params.swap,params.perturb,params.v_rate,params.lambda2,params.delta,params.init_delta,params.lambda0,params.lambda1,params.max_vocab)
+        logging.basicConfig(filename=filename, format="%(message)s", filemode='w') # ログのファイル出力先を設定
+    elif params.method in ['dtw','greedy','OT']:
+        filename = 'log/{}/{}/c{}_sl{}_wd{}_f{}_swap{}_per{}/vr{}_l0-{}_init-del{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.freq_rate,params.swap,params.perturb,params.v_rate,params.lambda0,params.init_delta,params.max_vocab)
+        logging.basicConfig(filename=filename, format="%(message)s", filemode='w') # ログのファイル出力先を設定
+    elif params.method == 'sinkhorn':
+        filename='log/{}/{}/c{}_sl{}_wd{}_f{}_swap{}_per{}/vr{}_reg{}_l0-{}_init-del{}_mv{}.log'.format(dataset.dataname,params.method,params.classnum,params.seqlen,params.w2v_dim,params.freq_rate,params.swap,params.perturb,params.v_rate,params.reg,params.lambda0,params.init_delta,params.max_vocab)
+        logging.basicConfig(filename=filename, format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
 avgs = []
-for i in range(5):
+for i in range(10):
     logger.info(i)
     dataset = Dataset()
     dataset = RVSML_OT_Learning(dataset,options)
@@ -168,7 +195,9 @@ for i in range(5):
 
     avg = get_word_translation_accuracy_for_random(dataset,options)
     avgs.append(avg)
+
 logger.info('mean:{}, std:{}'.format(mean(avgs),stdev(avgs)))
+print(filename)
 
 if False:
     import matplotlib.pyplot as plt

@@ -1,5 +1,6 @@
 import numpy as np
 from .pdist2 import pdist2
+import ot
 
 def dtw2(t,r):
     #Dynamic Time Warping Algorithm
@@ -11,7 +12,9 @@ def dtw2(t,r):
     #r is the vector you are testing
     N = np.shape(t)[0]
     M = np.shape(r)[0]
+    # print(N,M)
     d = pdist2(t, r, 'cosine')
+    # print('a')
     #d=(repmat(t(:),1,M)-repmat(r(:)',N,1)).^2 #this replaces the nested for loops from above Thanks Georg Schmitz
 
     D = np.zeros(np.shape(d))
@@ -26,7 +29,7 @@ def dtw2(t,r):
     for n in range(1,N):
         for m in range(1,M):
             D[n,m]=d[n,m]+min(D[n-1,m],D[n-1,m-1],D[n,m-1])
-
+    
     Dist=D[-1,-1]
     n=N-1
     m=M-1
@@ -44,12 +47,12 @@ def dtw2(t,r):
         else:
             values = min(D[n-1,m],D[n,m-1],D[n-1,m-1])
             if values==D[n-1,m]:
-                n=n-1
+                n -= 1
             elif values==D[n,m-1]:
-                m=m-1
+                m -= 1
             else:
-                n=n-1
-                m=m-1
+                n -= 1
+                m -= 1
         k=k+1
         # print(n,m)
         w.append([n,m])
@@ -65,7 +68,8 @@ if __name__ == '__main__':
     a = np.array([[1,0,0],[0,1,0],[0,0,1]])
     b = np.array([[1,0,0],[1,0,0],[0,1,0],[0,1,0],[0,0,1],[0,0,1]])
     dtw2(a,b)
-def OPW_w(X,Y,a,b,options,VERBOSE=0):
+
+def OPW_w(X,Y,options,VERBOSE=0):
     # Compute the Order-Preserving Wasserstein Distance (OPW) for two sequences
     # X and Y
 
@@ -147,13 +151,8 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     # In practical situations it might be a good idea to do the following:
     # K(K<1e-100)=1e-100
 
-    if not a:
-        a = np.ones((N,1))/N
-
-
-    if not b:
-        b = np.ones((M,1))/M
-
+    a = np.ones((N,1))/N
+    b = np.ones((M,1))/M
 
     ainvK = K/a
 
@@ -189,3 +188,57 @@ def OPW_w(X,Y,a,b,options,VERBOSE=0):
     T = v.T * u * K
 
     return dis,T
+
+def greedy(X,Y):
+    # Compute the greedy distance for two sequences
+    # X and Y
+
+    # -------------
+    # INPUT:
+    # -------------
+    # X: a d * N matrix, representing the input sequence consists of of N
+    # d-dimensional vectors, where N is the number of instances (vectors) in X,
+    # and d is the dimensionality of instances
+    # Y: a d * M matrix, representing the input sequence consists of of N
+    # d-dimensional vectors, , where N is the number of instances (vectors) in
+    # Y, and d is the dimensionality of instances
+    # iterations = total number of iterations
+
+    # -------------
+    # OUTPUT
+    # -------------
+    # dis: the greedy distance between X and Y
+    # T: the learned transport between X and Y, which is a N*M matrix
+    N = np.shape(X)[0]
+    M = np.shape(Y)[0]
+    T = np.zeros((N,M))
+    total_dist = 0
+    for i in range(N):
+        min_dist = float('inf')
+        for j in range(M):
+            d = 1-np.dot(X[i]/np.linalg.norm(X[i]),Y[j]/np.linalg.norm(Y[j]))
+            if min_dist>d:
+                min_ind = j
+                min_dist = d
+        T[i][min_ind] = 1
+        total_dist += min_dist
+    return total_dist,T
+
+def OT(X,Y):
+    D = pdist2(X,Y, 'cosine')
+
+    N, M = np.shape(X)[0], np.shape(Y)[0]
+    a, b = np.ones(N)/N, np.ones(M)/M
+
+    dist = ot.emd2(a,b,D)
+    T = ot.emd(a,b,D)
+    return dist, T
+
+def sinkhorn(X,Y):
+    D = pdist2(X,Y, 'cosine')
+    N, M = np.shape(X)[0], np.shape(Y)[0]
+    a, b = np.ones(N)/N, np.ones(M)/M
+
+    dist = ot.sinkhorn2(a,b,D,0.1)[0]
+    T = ot.sinkhorn(a,b,D,0.1)
+    return dist, T

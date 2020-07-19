@@ -20,7 +20,7 @@ def knn(i,task_per_cpu,k_num,k_pool,dataset,options,rightnum,Macro=None,Micro=No
             if options.method == 'dtw':
                 Dist,T = dtw2(dataset.traindownsetdata[m2],dataset.testdownsetdata[j])
             elif options.method == 'opw':
-                Dist,T = OPW_w(dataset.traindownsetdata[m2],dataset.testdownsetdata[j],[],[],options,0)
+                Dist,T = OPW_w(dataset.traindownsetdata[m2],dataset.testdownsetdata[j],options,0)
             # logger.info(T)
             dis_totrain_scores[m2] = Dist
             if np.isnan(Dist):
@@ -47,7 +47,7 @@ def knn(i,task_per_cpu,k_num,k_pool,dataset,options,rightnum,Macro=None,Micro=No
         # Micro[j] = metrics.average_precision_score(dataset.trainsetlabelfull[:,dataset.testsetdatalabel[j]-1],temp_dis, 'micro')
     return rightnum
 
-def virtual(i,task_per_cpu,dataset,options,rightnum,Macro=None,Micro=None,):
+def virtual(i,task_per_cpu,dataset,options,rightnum,Macro=None,Micro=None):
     logger = logging.getLogger('{}Log'.format(dataset.dataname))
     start = i*task_per_cpu
     end = (i+1)*task_per_cpu
@@ -55,21 +55,21 @@ def virtual(i,task_per_cpu,dataset,options,rightnum,Macro=None,Micro=None,):
         end = dataset.testsetdatanum
     print(i,start,end-1)
     for j in range(start,end):
-        logger.info("j:{}".format(j))
+        print("j:{}".format(j))
         dis_to_virtual = np.zeros(dataset.classnum)
         for c in range(dataset.classnum):
             #[Dist,T] = Sinkhorn_distance(trainsetdata[m2],testsetdata[j],lambda,0)
             if options.method == 'dtw':
-                print('dtw')
                 Dist,T = dtw2(dataset.virtual[c],dataset.testdownsetdata[j])
             elif options.method == 'opw':
-                Dist,T = OPW_w(dataset.virtual[c],dataset.testdownsetdata[j],[],[],options,0)
+                Dist,T = OPW_w(dataset.virtual[c],dataset.testdownsetdata[j],options,0)
             dis_to_virtual[c] = Dist
-            # logger.info(T)
+        #     logger.info(T)
             if np.isnan(Dist):
                 logger.info('NaN distance!')
 
         ind = np.argmin(dis_to_virtual)
+        # print(ind)
         predict = ind+1
         if predict==dataset.testsetdatalabel[j]:
             rightnum += 1
@@ -91,7 +91,7 @@ def Classifier(dataset,options):
     # Macro = Value(ctypes.c_float * dataset.testsetdatanum)
     # Micro = Value(ctypes.c_float * dataset.testsetdatanum)
 
-    cpu_count = 2
+    cpu_count = options.cpu_count
     task_per_cpu = dataset.testsetdatanum//(cpu_count-1)+1
 
     if options.classify == 'knn':

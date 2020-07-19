@@ -162,14 +162,14 @@ def eval_word_trans(p,i,j,word_per_cpu,dataset,options):
     rightnum = 0
     start = p*word_per_cpu
     end = (p+1)*word_per_cpu
-    if end > dataset.max_vocab:
-        end = dataset.max_vocab
+    if end > dataset.real_vocab:
+        end = dataset.real_vocab
     # print(p,start,end-1)
     for v in range(start,end):
         if v%1000==0:
             print("v:{}".format(v))
-        dists = np.zeros(dataset.max_vocab)
-        for u in range(dataset.max_vocab):
+        dists = np.zeros(dataset.real_vocab)
+        for u in range(dataset.real_vocab):
             dists[u] = 1-np.dot(dataset.learned_emb[i][v] / np.linalg.norm(dataset.learned_emb[i][v]), dataset.learned_emb[j][u] / np.linalg.norm(dataset.learned_emb[j][u]))
         if np.argmin(dists)==v:
             rightnum += 1
@@ -179,7 +179,7 @@ def get_word_translation_accuracy_for_random(dataset,options):
     logger = getLogger('{}Log'.format(dataset.dataname))
     langnum = dataset.langnum
     cpu_count = options.cpu_count
-    word_per_cpu = dataset.max_vocab//(cpu_count-1)+1
+    word_per_cpu = dataset.real_vocab//(cpu_count-1)+1
     acc = np.zeros((langnum,langnum))
     accs = []
     for i in range(langnum):
@@ -194,7 +194,7 @@ def get_word_translation_accuracy_for_random(dataset,options):
             rightnum = 0
             for rs in rightnums:
                 rightnum += rs
-            acc[i][j] = rightnum/dataset.max_vocab
+            acc[i][j] = rightnum/dataset.real_vocab
             accs.append(acc[i][j])
             print('acc',acc[i][j])
     logger.info(acc)
