@@ -1,4 +1,4 @@
-function L = RVML_OT_Learning(trainset,templatenum,lambda,options)
+function L = RVML_OT_Learning_greedy(trainset,templatenum,lambda,options)
 
 % delta = 1;
 % lambda1 = 50;
@@ -6,9 +6,6 @@ function L = RVML_OT_Learning(trainset,templatenum,lambda,options)
 % max_nIter = 200;
 % err_limit = 10^(-6);
 
-delta = options.delta;
-lambda1 = options.lambda1;
-lambda2 = options.lambda2;
 max_nIter = options.max_iters;
 err_limit = options.err_limit;
 
@@ -50,7 +47,7 @@ for c = 1:classnum
             T_ini = zeros(seqlen,templatenum);
             for i = 1:seqlen
                 for j = 1:templatenum
-                    T_ini(i,j) = (1+randn*options.init_delta);
+                    T_ini(i,j) = 1+randn*options.init_delta;
                 end
             end
         end
@@ -63,7 +60,6 @@ for c = 1:classnum
         end
     end
 end
-
 R_I = R_A + lambda*N*eye(dim); 
 %L = inv(R_I) * R_B;
 L = R_I\R_B;
@@ -85,50 +81,9 @@ for nIter = 1:max_nIter
 %         end
         for n = 1:trainsetnum(c)
             seqlen = size(trainset{c}{n},1);
-            [dist, T] = OPW_w(trainset{c}{n}*L,virtual_sequence{c},[],[],lambda1,lambda2,delta,0);
-            loss = loss + dist;
-            for i = 1:seqlen
-                temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);
-                for j = 1:templatenum
-                    R_A = R_A + T(i,j)*temp_ra;
-                    R_B = R_B + T(i,j)*trainset{c}{n}(i,:)'*virtual_sequence{c}(j,:);
-                end
-            end
-        end
-    end
-    loss = loss/N + trace(L'*L);
-    if mod(nIter,10)==0
-        disp(loss);
-    end
-    if abs(loss - loss_old) < err_limit
-        disp(T);
-        disp(nIter);
-        break;
-    else
-        loss_old = loss;
-    end
-    
-    R_I = R_A + lambda*N*eye(dim); 
-    %L = inv(R_I) * R_B;
-    L = R_I\R_B;   
-end
-disp("OPW done")
-for nIter = 1:max_nIter
-%     disp(nIter)
-%     if nIter == 2
-%         disp("stop");
-%     end
-    loss = 0;
-    R_A = zeros(dim,dim);
-    R_B = zeros(dim,downdim);
-    N = sum(trainsetnum);
-    for c = 1:classnum
-%         if c == 2
-%             disp("stop");
-%         end
-        for n = 1:trainsetnum(c)
-            seqlen = size(trainset{c}{n},1);
             [dist, T] = greedy(trainset{c}{n}*L,virtual_sequence{c});
+%             disp(d)
+%             disp(T)
             loss = loss + dist;
             for i = 1:seqlen
                 temp_ra = trainset{c}{n}(i,:)'*trainset{c}{n}(i,:);

@@ -6,8 +6,8 @@ function [Dist,T]=dtw2_fast(t,r)
 %w is the optimal path
 %t is the vector you are testing against
 %r is the vector you are testing
-[rows,N]=size(t);
-[rows,M]=size(r);
+[~,N]=size(t);
+[~,M]=size(r);
 %for n=1:N
 %    for m=1:M
 %        d(n,m)=(t(n)-r(m))^2;
@@ -52,7 +52,7 @@ while ((n+m)~=2)
     elseif (m-1)==0
         n=n-1;
     else 
-      [values,number]=min([D(n-1,m),D(n,m-1),D(n-1,m-1)]);
+      [~,number]=min([D(n-1,m),D(n,m-1),D(n-1,m-1)]);
       switch number
       case 1
         n=n-1;
@@ -62,7 +62,7 @@ while ((n+m)~=2)
         n=n-1;
         m=m-1;
       end
-  end
+    end
     k=k+1;
     w=cat(1,w,[n,m]);
 end

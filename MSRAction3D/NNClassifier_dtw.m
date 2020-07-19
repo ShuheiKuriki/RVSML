@@ -37,7 +37,6 @@ function [Map,Acc,knn_averagetime] = NNClassifier_dtw(classnum,trainset,trainset
     
     rightnum = zeros(k_num,1);
     for j = 1:testsetdatanum
-        disp(j);
         for m2 = 1:trainsetdatanum
             [Dist,T] = dtw2(trainsetdata{m2}',testsetdata{j}');
             %[Dist,D,matchlength,w] = dtw2_fast(trainsetdata{m2}',testsetdata{j}');
@@ -58,7 +57,7 @@ function [Map,Acc,knn_averagetime] = NNClassifier_dtw(classnum,trainset,trainset
                 ind=find(ClassLabel==trainsetlabel(index(temp_i)));
                 cnt(ind)=cnt(ind)+1;
             end
-            [distm2,ind]=max(cnt);        
+            [distm2,ind]=max(cnt);
             predict=ClassLabel(ind);
 %             disp(predict);
             predict = predict(1);

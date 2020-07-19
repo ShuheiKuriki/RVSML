@@ -1,4 +1,4 @@
-function [Map,Acc,knn_averagetime] = NNClassifier(classnum,trainset,trainsetnum,testsetdata,testsetdatanum,testsetlabel,options)
+function [Map,Acc,knn_averagetime] = NNClassifier_greedy(classnum,trainset,trainsetnum,testsetdata,testsetdatanum,testsetlabel,options)
     lambda1 = options.lambda1;
     lambda2 = options.lambda2;
     delta = options.delta;
@@ -41,7 +41,7 @@ function [Map,Acc,knn_averagetime] = NNClassifier(classnum,trainset,trainsetnum,
         for m2 = 1:trainsetdatanum
             %[Dist,D,matchlength,w] = dtw2(trainsetdata{m2}',testsetdata{j}');
 %             [Dist,T] = Sinkhorn_distance(trainsetdata{m2},testsetdata{j},lambda0,0);     
-            [Dist,T] = OPW_w(trainsetdata{m2},testsetdata{j},[],[],lambda1,lambda2,delta,0);
+            [Dist,T] = greedy(trainsetdata{m2},testsetdata{j});
             %[dist, T] = OPW_w(ct_barycenter{c}.supp',ct_barycenter{c2}.supp',ct_barycenter{c}.w',ct_barycenter{c2}.w',lambda1,lambda2,delta,0);
             dis_totrain_scores(m2,j) = Dist;
             if isnan(Dist)

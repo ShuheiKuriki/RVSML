@@ -127,11 +127,11 @@ while compt<maxIter
     % check the stopping criterion every 20 fixed point iterations
     if mod(compt,20)==1 || compt==maxIter   
         % split computations to recover right and left scalings.        
-        v=b./(K'*u); 
+        v=b./(K'*u);
         u=1./(ainvK*v);
         
         Criterion=norm(sum(abs(v.*(K'*u)-b)),p_norm);
-        if Criterion<tolerance || isnan(Criterion), % norm of all || . ||_1 differences between the marginal of the current solution with the actual marginals.
+        if Criterion<tolerance || isnan(Criterion) % norm of all || . ||_1 differences between the marginal of the current solution with the actual marginals.
             break;
         end
         
