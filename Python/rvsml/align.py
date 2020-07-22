@@ -190,25 +190,6 @@ def OPW_w(X,Y,options,VERBOSE=0):
     return dis,T
 
 def greedy(X,Y):
-    # Compute the greedy distance for two sequences
-    # X and Y
-
-    # -------------
-    # INPUT:
-    # -------------
-    # X: a d * N matrix, representing the input sequence consists of of N
-    # d-dimensional vectors, where N is the number of instances (vectors) in X,
-    # and d is the dimensionality of instances
-    # Y: a d * M matrix, representing the input sequence consists of of N
-    # d-dimensional vectors, , where N is the number of instances (vectors) in
-    # Y, and d is the dimensionality of instances
-    # iterations = total number of iterations
-
-    # -------------
-    # OUTPUT
-    # -------------
-    # dis: the greedy distance between X and Y
-    # T: the learned transport between X and Y, which is a N*M matrix
     N = np.shape(X)[0]
     M = np.shape(Y)[0]
     T = np.zeros((N,M))
@@ -216,7 +197,11 @@ def greedy(X,Y):
     for i in range(N):
         min_dist = float('inf')
         for j in range(M):
-            d = 1-np.dot(X[i]/np.linalg.norm(X[i]),Y[j]/np.linalg.norm(Y[j]))
+            xy_dot = np.dot(X[i],Y[j])
+            if xy_dot==0:
+                d = 1
+            else:
+                d = 1-xy_dot/(np.linalg.norm(X[i])*np.linalg.norm(Y[j]))
             if min_dist>d:
                 min_ind = j
                 min_dist = d
