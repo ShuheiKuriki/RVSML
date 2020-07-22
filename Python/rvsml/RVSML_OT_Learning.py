@@ -90,9 +90,10 @@ def RVSML_OT_Learning(dataset,options):
                         R_A += T[i,j] * temp_ra
                         R_B += T[i,j] * np.dot(a.reshape((len(a),1)), b.reshape((1, len(b))))
         # logger.info(Ts)
-        logger.info("iteration:{}, loss:{}".format(nIter,loss/N))
         loss = loss/N + np.trace(np.dot(L.T,L))
+        logger.info("iteration:{}, loss:{}".format(nIter,loss/N))
         if np.abs(loss - loss_old) < options.err_limit:
+            logger.info(T)
             break
         else:
             loss_old = loss

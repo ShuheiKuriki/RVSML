@@ -1,7 +1,9 @@
 import numpy as np
 from rvsml.run_RVSML import run_RVSML
+from set_text import read_txt_embeddings
 import logging,pickle,time,os,argparse,torch
 from src.utils import bool_flag
+from src.evaluation.word_translation import get_word_translation_accuracy
 np.set_printoptions(precision=3,suppress=True, threshold=10000)
 
 if 'args':
@@ -12,7 +14,7 @@ if 'args':
     parser.add_argument("--exp_path", type=str, default="", help="Where to store experiment logs and models")
     parser.add_argument("--exp_name", type=str, default="debug", help="Experiment name")
     parser.add_argument("--exp_id", type=str, default="", help="Experiment ID")
-    parser.add_argument("--cuda", type=bool_flag, default=False, help="Run on GPU")
+    parser.add_argument("--cuda", type=bool_flag, default=True, help="Run on GPU")
     parser.add_argument("--export", type=str, default="txt", help="Export embeddings after training (txt / pth)")
     # data
     parser.add_argument("--langnum", type=int, default=2, help="the number of languages")
@@ -21,12 +23,12 @@ if 'args':
     parser.add_argument("--max_vocab", type=int, default=1000, help="the number of vocablaries")
     # highpara
     parser.add_argument("--method", type=str, default='dtw', help="alignment method")
-    parser.add_argument("--v_length", type=int, default=10, help="the rate of the templatenum")
+    parser.add_argument("--v_length", type=int, default=7, help="the rate of the templatenum")
     parser.add_argument("--lambda0", type=float, default=0.1, help="the parameter of the rotation matrix")
-    parser.add_argument("--lambda1", type=float, default=1, help="the parameter of the inverse difference moment")
-    parser.add_argument("--lambda2", type=float, default=1, help="the parameter of the standard distribution")
+    parser.add_argument("--lambda1", type=float, default=0.1, help="the parameter of the inverse difference moment")
+    parser.add_argument("--lambda2", type=float, default=0.1, help="the parameter of the standard distribution")
     parser.add_argument("--delta", type=float, default=1, help="variance of the standard distribution")
-    parser.add_argument("--init_delta", type=float, default=0.1, help="variance of the standard distribution")
+    parser.add_argument("--init_delta", type=float, default=1, help="variance of the standard distribution")
     parser.add_argument("--reg", type=float, default=1, help="regularization parameter of sinkhorn distance")
     parser.add_argument("--init", type=str, default='uniform', help="initial by random")
 
@@ -83,20 +85,24 @@ if 'args':
 
 class Options:
     def __init__(self):
-        self.max_iters, self.err_limit = 1000, 10**(-5)
-        self.lambda0, self.lambda1, self.lambda2 = params.lambda0, params.lambda1, params.lambda2
+        self.max_iters, self.err_limit = 1000, 10**(-4)
+        if params.method in ["dtw","greedy"]:
+            self.lambda0 = 0.1
+        elif params.method in ["opw","OT","sinkhorn"]:
+            self.lambda0 = 0.1
+        self.lambda1, self.lambda2 = params.lambda1, params.lambda2
         self.delta = params.delta
         self.method = params.method
         self.init = params.init
         self.init_delta = params.init_delta
         self.templatenum = params.v_length
-        self.cpu_count = os.cpu_count()
+        self.cpu_count = os.cpu_count()//2
         self.classify = 'knn'
 
 class Dataset:
     def __init__(self,data=None):
         self.dataname = 'humanRights'
-        self.langs = ['en','es']
+        self.langs = ['es','en']
         self.langnum, self.classnum, self.dim = 2, 30, 300
         self.trainsetdatanum = self.langnum * self.classnum
         self.trainsetnum = [self.langnum] * self.classnum
@@ -132,7 +138,10 @@ dataset = Dataset()
 logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
 logger.setLevel(20) # ログレベルの設定
 logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
-logging.basicConfig(filename='{}/{}.log'.format(dataset.dataname,dataset.dataname), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+dirname = '{}/log/{}-{}_{}_v{}/'.format(dataset.dataname,dataset.langs[0],dataset.langs[1],params.method,params.v_length)
+if not os.path.isdir(dirname):
+    os.mkdir(dirname)
+logging.basicConfig(filename='{}/log/{}-{}_{}_v{}/init-{}{}.log'.format(dataset.dataname,dataset.langs[0],dataset.langs[1],params.method,params.v_length,params.init,params.init_delta), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
 data = []
 for c in range(dataset.classnum):
@@ -142,3 +151,13 @@ dataset = Dataset(data)
 dataset.getlabelfull()
 
 dataset = run_RVSML(dataset,options)
+
+dico1,emb1 = read_txt_embeddings(dataset.langs[0])
+dico2,emb2 = read_txt_embeddings(dataset.langs[1])
+emb1 = np.dot(emb1,dataset.L)
+emb2 = np.dot(emb2,dataset.L)
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+emb1 = torch.from_numpy(emb1.astype(np.float32)).clone().to(device)
+emb2 = torch.from_numpy(emb2.astype(np.float32)).clone().to(device)
+accs = get_word_translation_accuracy(dataset.langs[0], dico1.word2id, emb1, dataset.langs[1], dico2.word2id, emb2, "nn", 'default')
+logger.info(accs)
