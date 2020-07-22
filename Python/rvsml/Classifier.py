@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from .align import dtw2,OPW_w
+from .align import dtw2,OPW_w,greedy,sinkhorn,OT
 # from sklearn import metrics
 import logging,os
 from multiprocessing import Value, Pool
@@ -13,7 +13,7 @@ def knn(i,task_per_cpu,k_num,k_pool,dataset,options,rightnum,Macro=None,Micro=No
         end = dataset.testsetdatanum
     print(i,start,end-1)
     for j in range(start,end):
-        logger.info("j:{}".format(j))
+        print("j:{}".format(j))
         dis_totrain_scores = np.zeros(dataset.trainsetdatanum)
         for m2 in range(dataset.trainsetdatanum):
             #[Dist,T] = Sinkhorn_distance(trainsetdata[m2],testsetdata[j],lambda,0)
@@ -21,6 +21,12 @@ def knn(i,task_per_cpu,k_num,k_pool,dataset,options,rightnum,Macro=None,Micro=No
                 Dist,T = dtw2(dataset.traindownsetdata[m2],dataset.testdownsetdata[j])
             elif options.method == 'opw':
                 Dist,T = OPW_w(dataset.traindownsetdata[m2],dataset.testdownsetdata[j],options,0)
+            elif options.method == 'greedy':
+                Dist,T = greedy(dataset.traindownsetdata[m2],dataset.testdownsetdata[j])
+            elif options.method == 'OT':
+                Dist,T = OT(dataset.traindownsetdata[m2],dataset.testdownsetdata[j])
+            elif options.method == 'sinkhorn':
+                Dist,T = sinkhorn(dataset.traindownsetdata[m2],dataset.testdownsetdata[j])
             # logger.info(T)
             dis_totrain_scores[m2] = Dist
             if np.isnan(Dist):
@@ -63,6 +69,12 @@ def virtual(i,task_per_cpu,dataset,options,rightnum,Macro=None,Micro=None):
                 Dist,T = dtw2(dataset.virtual[c],dataset.testdownsetdata[j])
             elif options.method == 'opw':
                 Dist,T = OPW_w(dataset.virtual[c],dataset.testdownsetdata[j],options,0)
+            elif options.method == 'greedy':
+                Dist,T = greedy(dataset.virtual[c],dataset.testdownsetdata[j])
+            elif options.method == 'OT':
+                Dist,T = OT(dataset.virtual[c],dataset.testdownsetdata[j])
+            elif options.method == 'sinkhorn':
+                Dist,T = sinkhorn(dataset.virtual[c],dataset.testdownsetdata[j])
             dis_to_virtual[c] = Dist
         #     logger.info(T)
             if np.isnan(Dist):
