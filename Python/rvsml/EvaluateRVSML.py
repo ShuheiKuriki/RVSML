@@ -8,14 +8,14 @@ import logging
 def Evaluate_RVSML(dataset,options):
     logger = logging.getLogger('{}Log'.format(dataset.dataname))
 
-    logger.info("{} start".format(options.method))
+    print("{} start".format(options.method))
 
     tic = time.time()
     virtual,L = RVSML_OT_Learning(dataset,options)
     dataset.virtual = virtual
     dataset.L = L
     RVSML_time = time.time() - tic
-    logger.info("{} lerning done".format(options.method))
+    print("{} lerning done".format(options.method))
     ## classification with the learned metric
     # print("Classification start")
     traindownset = [0]*dataset.classnum
@@ -39,9 +39,9 @@ def Evaluate_RVSML(dataset,options):
     accs,knn_time,knn_average_time = Classifier(dataset,options)
     # accs_1 = accs[0]
 
-    logger.info("{} Classification done".format(options.method))
+    print("{} Classification done".format(options.method))
 
-    logger.info("{} done".format(options.method))
+    print("{} done".format(options.method))
 
     logger.info('Training time is {:.4f} \n'.format(RVSML_time))
     logger.info('Classification using 1 nearest neighbor classifier:\n')

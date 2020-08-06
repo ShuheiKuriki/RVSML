@@ -96,7 +96,6 @@ def get_word_translation_accuracy(lang1, word2id1, emb1, lang2, word2id2, emb2, 
         path = dico_eval
     dico = load_dictionary(path, word2id1, word2id2)
     dico = dico.cuda() if emb1.is_cuda else dico
-
     assert dico[:, 0].max() < emb1.size(0)
     assert dico[:, 1].max() < emb2.size(0)
 
@@ -140,11 +139,12 @@ def get_word_translation_accuracy(lang1, word2id1, emb1, lang2, word2id2, emb2, 
 
     else:
         raise Exception('Unknown method: "%s"' % method)
-
     results = []
     top_matches = scores.topk(10, 1, True)[1]
+    logger.info('{}-{}'.format(lang1,lang2))
     for k in [1, 5, 10]:
         top_k_matches = top_matches[:, :k]
+
         _matching = (top_k_matches == dico[:, 1][:, None].expand_as(top_k_matches)).sum(1).cpu().numpy()
         # allow for multiple possible translations
         matching = {}

@@ -17,20 +17,19 @@ if 'args':
     parser.add_argument("--cuda", type=bool_flag, default=True, help="Run on GPU")
     parser.add_argument("--export", type=str, default="txt", help="Export embeddings after training (txt / pth)")
     # data
-    parser.add_argument("--langnum", type=int, default=2, help="the number of languages")
-    parser.add_argument("--classnum", type=int, default=30, help="the number of classes")
+    # parser.add_argument("--langnum", type=int, default=2, help="the number of languages")
+    parser.add_argument("--classnum", type=int, default=60, help="the number of classes")
     parser.add_argument("--w2v_dim", type=int, default=300, help="the dimension of word2vec")
-    parser.add_argument("--max_vocab", type=int, default=1000, help="the number of vocablaries")
     # highpara
     parser.add_argument("--method", type=str, default='dtw', help="alignment method")
-    parser.add_argument("--v_length", type=int, default=7, help="the rate of the templatenum")
-    parser.add_argument("--lambda0", type=float, default=0.1, help="the parameter of the rotation matrix")
-    parser.add_argument("--lambda1", type=float, default=0.1, help="the parameter of the inverse difference moment")
-    parser.add_argument("--lambda2", type=float, default=0.1, help="the parameter of the standard distribution")
+    parser.add_argument("--v_rate", type=int, default=7, help="the rate of the templatenum")
+    parser.add_argument("--lambda1", type=float, default=0.001, help="the parameter of the inverse difference moment")
+    parser.add_argument("--lambda2", type=float, default=0.01, help="the parameter of the standard distribution")
     parser.add_argument("--delta", type=float, default=1, help="variance of the standard distribution")
     parser.add_argument("--init_delta", type=float, default=1, help="variance of the standard distribution")
-    parser.add_argument("--reg", type=float, default=1, help="regularization parameter of sinkhorn distance")
-    parser.add_argument("--init", type=str, default='uniform', help="initial by random")
+    parser.add_argument("--reg", type=float, default=0.003, help="regularization parameter of sinkhorn distance")
+    parser.add_argument("--init", type=str, default='normal', help="initial by random")
+    parser.add_argument("--distance", type=str, default='cosine', help="type of distnce")
 
     if "mapping":
         parser.add_argument("--map_id_init", type=bool_flag, default=True, help="Initialize the mapping as an identity matrix")
@@ -86,36 +85,46 @@ if 'args':
 class Options:
     def __init__(self):
         self.max_iters, self.err_limit = 1000, 10**(-4)
-        if params.method in ["dtw","greedy"]:
+        if params.method == 'dtw':
             self.lambda0 = 0.1
-        elif params.method in ["opw","OT","sinkhorn"]:
-            self.lambda0 = 0.1
+        elif params.method == 'greedy':
+            self.lambda0 = 0.01
+        elif params.method == "OT":
+            self.lambda0 = 0.001
+        elif params.method == "opw":
+            self.lambda0 = 0.0001
+        elif params.method == "sinkhorn":
+            self.lambda0 = 0.0001
         self.lambda1, self.lambda2 = params.lambda1, params.lambda2
         self.delta = params.delta
         self.method = params.method
         self.init = params.init
         self.init_delta = params.init_delta
-        self.templatenum = params.v_length
-        self.cpu_count = os.cpu_count()//2
-        self.classify = 'knn'
+        # self.templatenums = 1
+        self.distance = params.distance
+        self.regularize = params.reg
 
 class Dataset:
     def __init__(self,data=None):
         self.dataname = 'humanRights'
-        self.langs = ['es','en']
-        self.langnum, self.classnum, self.dim = 2, 30, 300
+        self.langs = ['en','es']
+        self.langnum, self.classnum, self.dim = len(self.langs), params.classnum, params.w2v_dim
         self.trainsetdatanum = self.langnum * self.classnum
         self.trainsetnum = [self.langnum] * self.classnum
         self.testsetdatanum = self.trainsetdatanum
         self.ClassLabel = np.arange(self.classnum).T+1
         self.trainsetdatalabel = [1+ i//self.langnum for i in range(self.trainsetdatanum)]
         self.testsetdatalabel = self.trainsetdatalabel
+        self.L = 0
         if data is not None:
             self.trainsetdata,self.testsetdata = data,data
             trainset = [[0]*self.langnum for _ in range(self.classnum)]
+            self.templatenums = np.zeros(self.classnum,dtype=int)
             for c in range(self.classnum):
                 for l in range(self.langnum):
                     trainset[c][l] = data[c*self.langnum+l]
+                    self.templatenums[c] += len(trainset[c][l])
+                self.templatenums[c] //= self.langnum*params.v_rate
             self.trainset = trainset
 
     def getlabelfull(self):
@@ -138,26 +147,33 @@ dataset = Dataset()
 logger = logging.getLogger('{}Log'.format(dataset.dataname)) # ログの出力名を設定
 logger.setLevel(20) # ログレベルの設定
 logger.addHandler(logging.StreamHandler()) # ログのコンソール出力の設定
-dirname = '{}/log/{}-{}_{}_v{}/'.format(dataset.dataname,dataset.langs[0],dataset.langs[1],params.method,params.v_length)
+lang_chr = ''
+for i in range(dataset.langnum):
+    lang_chr += dataset.langs[i]
+dirname = '{}/log/{}_{}/'.format(dataset.dataname,lang_chr,params.method)
 if not os.path.isdir(dirname):
     os.mkdir(dirname)
-logging.basicConfig(filename='{}/log/{}-{}_{}_v{}/init-{}{}.log'.format(dataset.dataname,dataset.langs[0],dataset.langs[1],params.method,params.v_length,params.init,params.init_delta), format="%(message)s", filemode='w') # ログのファイル出力先を設定
+logging.basicConfig(filename='{}/log/{}_{}/init-{}{}.log'.format(dataset.dataname,lang_chr,params.method,params.init,params.init_delta), format="%(message)s", filemode='w') # ログのファイル出力先を設定
 
 data = []
 for c in range(dataset.classnum):
     for l in dataset.langs:
-        data.append(np.load('{}/vectorized_texts/{}/article{}.npy'.format(dataset.dataname,l,c+1)))
+        data.append(np.load('{}/vectorized_texts/{}/sentence{}.npy'.format(dataset.dataname,l,c+1)))
 dataset = Dataset(data)
 dataset.getlabelfull()
 
-dataset = run_RVSML(dataset,options)
+dataset,knn_accs,virtual_acc = run_RVSML(dataset,options)
 
-dico1,emb1 = read_txt_embeddings(dataset.langs[0])
-dico2,emb2 = read_txt_embeddings(dataset.langs[1])
-emb1 = np.dot(emb1,dataset.L)
-emb2 = np.dot(emb2,dataset.L)
+dicos = [0]*dataset.langnum
+embs = [0]*dataset.langnum
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-emb1 = torch.from_numpy(emb1.astype(np.float32)).clone().to(device)
-emb2 = torch.from_numpy(emb2.astype(np.float32)).clone().to(device)
-accs = get_word_translation_accuracy(dataset.langs[0], dico1.word2id, emb1, dataset.langs[1], dico2.word2id, emb2, "nn", 'default')
-logger.info(accs)
+for i in range(dataset.langnum):
+    dicos[i],embs[i] = read_txt_embeddings(dataset.langs[i])
+    embs[i] = torch.from_numpy(np.dot(embs[i],dataset.L).astype(np.float32)).clone().to(device)
+for i in range(dataset.langnum):
+    for j in range(dataset.langnum):
+        if i==j:
+            continue
+        results = get_word_translation_accuracy(dataset.langs[i], dicos[i].word2id, embs[i], dataset.langs[j], dicos[j].word2id, embs[j], "nn", 'default')
+        logger.info('{}-{}: {}'.format(dataset.langs[i],dataset.langs[j],results))
+# logger.info(accs)

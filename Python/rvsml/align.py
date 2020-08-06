@@ -2,7 +2,7 @@ import numpy as np
 from .pdist2 import pdist2
 import ot
 
-def dtw2(t,r):
+def dtw2(t,r,options):
     #Dynamic Time Warping Algorithm
     #Dist is unnormalized distance between t and r
     #D is the accumulated distance matrix
@@ -13,7 +13,7 @@ def dtw2(t,r):
     N = np.shape(t)[0]
     M = np.shape(r)[0]
     # print(N,M)
-    d = pdist2(t, r, 'cosine')
+    d = pdist2(t, r, options.distance)
     # print('a')
     #d=(repmat(t(:),1,M)-repmat(r(:)',N,1)).^2 #this replaces the nested for loops from above Thanks Georg Schmitz
 
@@ -64,10 +64,6 @@ def dtw2(t,r):
         T[w[temp_t][0],w[temp_t][1]] = 1
 
     return Dist,T
-if __name__ == '__main__':
-    a = np.array([[1,0,0],[0,1,0],[0,0,1]])
-    b = np.array([[1,0,0],[1,0,0],[0,1,0],[0,1,0],[0,0,1],[0,0,1]])
-    dtw2(a,b)
 
 def OPW_w(X,Y,options,VERBOSE=0):
     # Compute the Order-Preserving Wasserstein Distance (OPW) for two sequences
@@ -137,7 +133,7 @@ def OPW_w(X,Y,options,VERBOSE=0):
             #D(i,j) = sum((X(i,:)-Y(j,:)).^2)
             S[i,j] = options.lambda1/((i/N-j/M)**2+1)
 
-    D = pdist2(X,Y, 'cosine')
+    D = pdist2(X,Y, options.distance)
     # In cases the instances in sequences are not normalized and/or are very
     # high-dimensional, the matrix D can be normalized or scaled as follows:
     # D = D/max(max(D))  D = D/(10^2)
@@ -189,7 +185,7 @@ def OPW_w(X,Y,options,VERBOSE=0):
 
     return dis,T
 
-def greedy(X,Y):
+def greedy(X,Y,options):
     N = np.shape(X)[0]
     M = np.shape(Y)[0]
     T = np.zeros((N,M))
@@ -209,8 +205,8 @@ def greedy(X,Y):
         total_dist += min_dist
     return total_dist,T
 
-def OT(X,Y):
-    D = pdist2(X,Y, 'cosine')
+def OT(X,Y,options):
+    D = pdist2(X,Y, options.distance)
 
     N, M = np.shape(X)[0], np.shape(Y)[0]
     a, b = np.ones(N)/N, np.ones(M)/M
@@ -219,11 +215,25 @@ def OT(X,Y):
     T = ot.emd(a,b,D)
     return dist, T
 
-def sinkhorn(X,Y):
-    D = pdist2(X,Y, 'cosine')
+def sinkhorn(X,Y,options):
+    D = pdist2(X,Y, options.distance)
     N, M = np.shape(X)[0], np.shape(Y)[0]
     a, b = np.ones(N)/N, np.ones(M)/M
 
-    dist = ot.sinkhorn2(a,b,D,0.1)[0]
+    dist = ot.sinkhorn2(a,b,D,options.regularize)[0]
     T = ot.sinkhorn(a,b,D,0.1)
     return dist, T
+
+def get_alignment(X,Y,options):
+    if options.method == 'dtw':
+        Dist,T = dtw2(X,Y,options)
+    elif options.method == 'opw':
+        Dist,T = OPW_w(X,Y,options,0)
+    elif options.method == 'greedy':
+        Dist,T = greedy(X,Y,options)
+    elif options.method == 'OT':
+        Dist,T = OT(X,Y,options)
+    elif options.method == 'sinkhorn':
+        Dist,T = sinkhorn(X,Y,options)
+    return Dist,T
+    

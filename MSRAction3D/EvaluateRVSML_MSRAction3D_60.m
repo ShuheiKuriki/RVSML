@@ -9,8 +9,8 @@ addpath('/usr/local/Cellar/vlfeat-0.9.21/toolbox');
 vl_setup();
 % addpath('libsvm-3.20/matlab');
 
-lambda = 0.0001;
-delta = 3;
+lambda = 0.1;
+delta = 1;
 init_delta = 1;
 lambda1 = 0.001;
 lambda2 = 0.01;
@@ -21,7 +21,7 @@ options.lambda2 = lambda2;
 options.delta = delta;
 options.init_delta = init_delta;
 options.init = "normal";
-options.method = "opw";
+options.method = "dtw";
 
 load MSR_Python_ori.mat;
 trainset_m = trainset;

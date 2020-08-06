@@ -52,35 +52,49 @@ def read_txt_embeddings(lang,full_vocab=False):
     assert embeddings.shape == (len(dico), _emb_dim_file)
     return dico, embeddings
 
-languages = ['English','Spanish']
-langs = ['en','es']
-title = 'humanRights'
+if __name__=='__main__':
+    languages = ['English','Spanish','Italian']
+    langs = ['en','es','it']
+    title = 'humanRights'
 
-for lang,language in zip(langs,languages):
-    dico,embeddings = read_txt_embeddings(lang)
-    with io.open('{}/texts/{}'.format(title,language), 'r', encoding='utf-8') as f:
-        words = []
-        for line in f:
-            space_split = line.split(' ')
-            if space_split[0] in ['Article','Artículo']:
-                words_np = np.array(words)
-                np.save('{}/vectorized_texts/{}/article{}'.format(title,lang,int(space_split[1])-1), words_np)
-                words = []
-                continue
-            for s in space_split:
-                s.lower()
-                if s=='':
+    for lang,language in zip(langs,languages):
+        dico,embeddings = read_txt_embeddings(lang)
+        with io.open('{}/texts/{}'.format(title,language), 'r', encoding='utf-8') as f:
+            embs,words = [],[]
+            article = False
+            sentence_num = 1
+            for line in f:
+                space_split = line.split(' ')
+                if space_split[0] in ['Articolo','Article','Artículo']:
+                    article=True
+                    print(line)
                     continue
-                if s[-1] not in ',.':
-                    if s in dico.word2id:
-                        emb = embeddings[dico.word2id[s]]
+                if article==False:
+                    continue
+                for s in space_split:
+                    s.lower()
+                    s = s.replace('\n','')
+                    if s=='':
+                        continue
+                    if s[-1] not in ',.':
+                        if s in dico.word2id:
+                            emb = embeddings[dico.word2id[s]]
+                        else:
+                            emb = np.zeros(300)
+                        embs.append(emb)
+                        words.append(s)
                     else:
-                        emb = np.zeros(300)
-                    words.append(emb)
-                else:
-                    if s[:-1] in dico.word2id:
-                        emb = embeddings[dico.word2id[s[:-1]]]
-                    else:
-                        emb = np.zeros(300)
-                    words.append(emb)
-                    words.append(embeddings[dico.word2id[s[-1]]])
+                        if s[:-1] in dico.word2id:
+                            emb = embeddings[dico.word2id[s[:-1]]]
+                        else:
+                            emb = np.zeros(300)
+                        embs.append(emb)
+                        words.append(s[:-1])
+                        embs.append(embeddings[dico.word2id[s[-1]]])
+                        words.append(s[-1])
+                        if s[-1] in ',.':
+                            embs_np = np.array(embs)
+                            print(sentence_num,words)
+                            np.save('{}/vectorized_texts/comma/{}/comma{}'.format(title,lang,sentence_num), embs_np)
+                            embs,words = [],[]
+                            sentence_num += 1
