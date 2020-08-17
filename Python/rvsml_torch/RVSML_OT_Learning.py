@@ -1,6 +1,5 @@
-import numpy as np
 from .align import get_alignment
-import logging
+import logging,torch,math
 
 def RVSML_OT_Learning(dataset,options):
     logger = logging.getLogger('{}Log'.format(dataset.dataname))
@@ -15,47 +14,46 @@ def RVSML_OT_Learning(dataset,options):
     virtual_sequence = [0]*classnum
     active_dim = -1
     for c in range(classnum):
-        virtual_sequence[c] = np.zeros((templatenums[c],downdim))
+        virtual_sequence[c] = torch.zeros(templatenums[c],downdim)
         for a_d in range(templatenums[c]):
             active_dim += 1
             virtual_sequence[c][a_d,active_dim] = 1
 
     ## inilization
-    R_A = np.zeros((dim,dim))
-    R_B = np.zeros((dim,downdim))
-    N = np.sum(trainsetnum)
+    R_A = torch.zeros(dim,dim)
+    R_B = torch.zeros(dim,downdim)
+    N = sum(trainsetnum)
     for c in range(classnum):
         for n in range(trainsetnum[c]):
-            seqlen = np.shape(trainset[c][n])[0]
-            print(n)
+            seqlen = trainset[c][n].size()[0]
             # test = trainset[c][0][n]
             if options.init == 'uniform':
-                T_ini = np.ones((seqlen,templatenums[c]))/(seqlen*templatenums[c])
+                T_ini = torch.ones((seqlen,templatenums[c]))/(seqlen*templatenums[c])
             elif options.init == 'random':
-                T_ini = np.zeros((seqlen,templatenums[c]))
+                T_ini = torch.zeros(seqlen,templatenums[c])
                 for i in range(seqlen):
                     for j in range(templatenums[c]):
-                        T_ini[i,j] = (1+np.random.randn()*options.init_delta)/(seqlen*templatenums[c])
+                        T_ini[i,j] = (1+torch.randn()*options.init_delta)/(seqlen*templatenums[c])
             elif options.init == 'normal':
-                T_ini = np.zeros((seqlen,templatenums[c]))
-                mid_para = np.sqrt( 1/seqlen**2 + 1/templatenums[c]**2 )
+                T_ini = torch.zeros(seqlen,templatenums[c])
+                mid_para = math.sqrt(1/seqlen**2 + 1/templatenums[c]**2)
                 for i in range(seqlen):
                     for j in range(templatenums[c]):
-                        d = np.abs(i/seqlen - j/templatenums[c])/mid_para
-                        T_ini[i,j] = np.exp(-d**2/(2*options.init_delta**2))/(options.init_delta*np.sqrt(2*np.pi))
+                        d = abs(i/seqlen - j/templatenums[c])/mid_para
+                        T_ini[i,j] = math.exp(-d**2/(2*options.init_delta**2))/(options.init_delta*math.sqrt(2*math.pi))
             # print(T_ini)
             for i in range(seqlen):
                 a = trainset[c][n][i,:]
-                temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
+                temp_ra = torch.mm(a.view(len(a),1), a.view(1,len(a)))
                 for j in range(templatenums[c]):
                     R_A += T_ini[i,j]*temp_ra
                     # logger.info(R_A.shape,R_B.shape,temp_ra.shape)
                     b = virtual_sequence[c][j,:]
-                    R_B += T_ini[i,j]*np.dot(a.reshape((len(a),1)), b.reshape((1, len(b))))
+                    R_B += T_ini[i,j]*torch.mm(a.view((len(a),1)), b.view((1, len(b))))
 
-    R_I = R_A + options.lambda0 * N * np.eye(dim)
+    R_I = R_A + options.lambda0 * N * torch.eye(dim)
     #L = inv(R_I) * R_B
-    L = np.linalg.solve(R_I,R_B)
+    L, _ = torch.solve(R_B,R_I)
 
     print("initialization done")
     print("update start")
@@ -63,36 +61,35 @@ def RVSML_OT_Learning(dataset,options):
     loss_old = 10**8
     for nIter in range(options.max_iters):
         loss = 0
-        R_A = np.zeros((dim,dim))
-        R_B = np.zeros((dim,downdim))
-        N = np.sum(trainsetnum)
+        R_A = torch.zeros(dim,dim)
+        R_B = torch.zeros(dim,downdim)
         # Ts = [[0]*trainsetnum[c] for _ in range(classnum)]
         for c in range(classnum):
             for n in range(trainsetnum[c]):
                 # logger.info(trainset[c][n])
-                seqlen = np.shape(trainset[c][n])[0]
-                dist, T = get_alignment(np.dot(trainset[c][n],L), virtual_sequence[c],options)
+                seqlen = trainset[c][n].size()[0]
+                dist, T = get_alignment(torch.mm(trainset[c][n],L), virtual_sequence[c],options)
                 loss += dist
                 # Ts[c][n] = T
                 for i in range(seqlen):
                     a = trainset[c][n][i,:]
-                    temp_ra = np.dot(a.reshape((len(a),1)), a.reshape((1,len(a))))
+                    temp_ra = torch.mm(a.view((len(a),1)), a.view((1,len(a))))
                     for j in range(templatenums[c]):
                         b = virtual_sequence[c][j,:]
                         R_A += T[i,j] * temp_ra
-                        R_B += T[i,j] * np.dot(a.reshape((len(a),1)), b.reshape((1, len(b))))
+                        R_B += T[i,j] * torch.mm(a.view((len(a),1)), b.view((1, len(b))))
         # logger.info(Ts)
-        loss = loss/N + np.trace(np.dot(L.T,L))
+        loss = loss/N + torch.trace(torch.mm(L.t(),L))
         logger.info("iteration:{}, loss:{}".format(nIter,loss/N))
-        if np.abs(loss - loss_old) < options.err_limit:
+        if abs(loss - loss_old) < options.err_limit:
             logger.info(T)
             break
         else:
             loss_old = loss
 
-        R_I = R_A + options.lambda0*N*np.eye(dim)
+        R_I = R_A + options.lambda0*N*torch.eye(dim)
         #L = inv(R_I) * R_B
-        L = np.linalg.solve(R_I,R_B)
+        L, _ = torch.solve(R_B,R_I)
     # logger.info(time.time()-tic)
     # for c in range(classnum):
         # for n in range(trainsetnum[c]):
