@@ -1,36 +1,15 @@
-"""
-MSRAction3Dの学習・分類を実行
-"""
-import logging, pickle, time, os, argparse, torch
+"""MSRAction3Dの学習・分類を実行"""
+import logging, pickle, time, os, torch
 import numpy as np
 from rvsml_torch.run_RVSML import run_RVSML
-from src.utils import bool_flag
-np.set_printoptions(precision=3, suppress=True)
+from src.parser import get_parser
+np.set_printoptions(precision=3, suppress=True, threshold=10000)
 
-if 'args':
-    parser = argparse.ArgumentParser(description='MSRAction3D')
-    parser.add_argument("--cuda", type=bool_flag, default=True, help="Run on GPU")
-    # highpara
-    parser.add_argument("--method", type=str, default='dtw', help="alignment method")
-    parser.add_argument("--v_length", type=int, default=4, help="the rate of the templatenum")
-    parser.add_argument("--lambda0_for_dtw", type=float, default=0.1, help="the parameter of the rotation matrix")
-    parser.add_argument("--lambda0_for_other", type=float, default=0.0001, help="the parameter of the rotation matrix")
-    parser.add_argument("--lambda1", type=float, default=0.01, help="the parameter of the inverse difference moment")
-    parser.add_argument("--lambda2", type=float, default=0.01, help="the parameter of the standard distribution")
-    parser.add_argument("--delta", type=float, default=3, help="variance of the standard distribution")
-    parser.add_argument("--init_delta", type=float, default=1, help="variance of the standard distribution")
-    parser.add_argument("--reg", type=float, default=0.003, help="regularization parameter of sinkhorn distance")
-    parser.add_argument("--init", type=str, default='normal', help="initial by random")
-    parser.add_argument("--metric", type=str, default='sqeuclidean', help="type of distnce")
-    parser.add_argument("--solve_method", type=str, default='Adagrad', help="type of distnce")
-    parser.add_argument("--lr", type=float, default=0.001, help="lerning rate of gradient descent")
-    parser.add_argument("--alpha", type=float, default=0.001, help="map_beta")
-
+parser = get_parser(rvsml=True, muse=False)
 params = parser.parse_args()
+
 class Options:
-    """
-    オプションを定義
-    """
+    """オプションを定義"""
     def __init__(self):
         self.max_epoch, self.err_limit = 10000, 10**(-5)
         self.method = params.method
@@ -52,9 +31,7 @@ class Options:
         self.alpha = params.alpha
 
 class Dataset:
-    """
-    データセットを用意
-    """
+    """データセットを用意"""
     def __init__(self):
         self.dataname = 'MSRAction3D'
         self.classnum, self.dim = 20, 60
@@ -110,7 +87,7 @@ for i in range(len(dataset.trainset)):
     for j in range(len(dataset.trainset[i])):
         dataset.trainset[i][j] = torch.from_numpy(dataset.trainset[i][j]).clone().to(device)
 
-dataset.getlabelfull()
+# dataset.getlabelfull()
 
 dataset, knn_acc, virtual_acc = run_RVSML(dataset, options)
 logger.info("method: %s, knn_acc: %.4f, virtual_acc: %.4f", params.method, knn_acc, virtual_acc)

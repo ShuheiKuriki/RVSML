@@ -64,7 +64,6 @@ def RVSML_OT_Learning(dataset, options):
                     for j in range(templatenums[c]):
                         d = abs(i/seqlen - j/templatenums[c])/mid_para
                         T_ini[i, j] = math.exp(-d**2/(2*options.init_delta**2))/(options.init_delta*math.sqrt(2*math.pi))
-            print(T_ini)
             for i in range(seqlen):
                 a = trainset[c][n][i, :]
                 temp_ra = torch.mm(a.view(len(a), 1), a.view(1, len(a)))
